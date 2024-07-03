@@ -1,11 +1,14 @@
 import requests
+import base64
 from typing import List
 from data_storage import DataStorage
 from base_processor import SourceProcessor
+import ollama
 
 
 class GitHubProcessor(SourceProcessor):
     BASE_URL = "https://api.github.com/search/repositories"
+    README_URL_TEMPLATE = "https://api.github.com/repos/{repo_full_name}/readme"
 
     def __init__(self, platform_name="GitHub"):
         self.platform_name = platform_name
@@ -56,10 +59,40 @@ class GitHubProcessor(SourceProcessor):
             "language": repo["language"],
         }
 
+    def get_readme_content(self, repo_full_name):
+        url = self.README_URL_TEMPLATE.format(repo_full_name=repo_full_name)
+        response = requests.get(url)
+        if response.status_code == 200:
+            readme_info = response.json()
+            readme_base64 = readme_info['content']
+            readme_content = base64.b64decode(readme_base64).decode('utf-8')
+            return readme_content
+        else:
+            print(f"Failed to fetch README for {repo_full_name}. Status code: {response.status_code}")
+            return ""
+
+    def check_docker_support(self, readme_content):
+        if not readme_content:
+            return False
+        
+        prompt = f"Is in this project any information how to run the project with Docker; Please Answer Yes Or No; Project info:{readme_content}"
+        response = ollama.generate(model="llama3:instruct", prompt=prompt)
+        answer = response.get('response', "").strip().lower()
+        
+        return 'yes' in answer
+
+    def add_docker_info(self, data_storage: DataStorage) -> DataStorage:
+        for repo_full_name in data_storage.data[self.platform_name].keys():
+            readme_content = self.get_readme_content(repo_full_name)
+            docker_support = self.check_docker_support(readme_content)
+            data_storage.data[self.platform_name][repo_full_name]["Docker"] = docker_support
+        return data_storage
+
 
 if __name__ == "__main__":
-    queries = ["machine learning", "data science"]
+    queries = ["Open Web UI", "data science"]
     github_processor = GitHubProcessor()
     combined_data = github_processor.combine_multiple_queries(queries, num_sources_per_query=5)
-    combined_data.save_to_yaml("github_repositories.yaml")
-    print(combined_data.to_dict())
+    combined_data_with_docker = github_processor.add_docker_info(combined_data)
+    combined_data_with_docker.save_to_yaml("github_repositories.yaml")
+    print(combined_data_with_docker.to_dict())
