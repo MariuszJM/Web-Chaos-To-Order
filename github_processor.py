@@ -4,6 +4,7 @@ from typing import List
 from data_storage import DataStorage
 from base_processor import SourceProcessor
 import ollama
+from config import GITHUB_TOKEN
 
 
 class GitHubProcessor(SourceProcessor):
@@ -43,7 +44,10 @@ class GitHubProcessor(SourceProcessor):
             "order": "desc",
             "per_page": max_results,
         }
-        headers = {"Accept": "application/vnd.github.v3+json"}
+        headers = {
+            "Accept": "application/vnd.github.v3+json",
+            "Authorization": f"token {GITHUB_TOKEN}"
+        }
 
         response = requests.get(self.BASE_URL, params=params, headers=headers)
 
@@ -61,7 +65,10 @@ class GitHubProcessor(SourceProcessor):
 
     def get_readme_content(self, repo_full_name):
         url = self.README_URL_TEMPLATE.format(repo_full_name=repo_full_name)
-        response = requests.get(url)
+        headers = {
+            "Authorization": f"token {GITHUB_TOKEN}"
+        }
+        response = requests.get(url, headers=headers)
         if response.status_code == 200:
             readme_info = response.json()
             readme_base64 = readme_info['content']
@@ -74,18 +81,30 @@ class GitHubProcessor(SourceProcessor):
     def check_docker_support(self, readme_content):
         if not readme_content:
             return False
-        
+
         prompt = f"Is in this project any information how to run the project with Docker; Please Answer Yes Or No; Project info:{readme_content}"
         response = ollama.generate(model="llama3:instruct", prompt=prompt)
         answer = response.get('response', "").strip().lower()
-        
+
         return 'yes' in answer
 
-    def add_docker_info(self, data_storage: DataStorage) -> DataStorage:
+    def summarize_readme(self, readme_content):
+        if not readme_content:
+            return "No README content available."
+
+        prompt = f"Summarize in detail the project based on the following README content; Don't add any comments just summary: {readme_content}"
+        response = ollama.generate(model="llama3:instruct", prompt=prompt)
+        summary = response.get('response', "").strip()
+
+        return summary
+
+    def add_docker_and_summary_info(self, data_storage: DataStorage) -> DataStorage:
         for repo_full_name in data_storage.data[self.platform_name].keys():
             readme_content = self.get_readme_content(repo_full_name)
             docker_support = self.check_docker_support(readme_content)
+            summary = self.summarize_readme(readme_content)
             data_storage.data[self.platform_name][repo_full_name]["Docker"] = docker_support
+            data_storage.data[self.platform_name][repo_full_name]["Summary"] = summary
         return data_storage
 
 
@@ -93,6 +112,6 @@ if __name__ == "__main__":
     queries = ["Open Web UI", "data science"]
     github_processor = GitHubProcessor()
     combined_data = github_processor.combine_multiple_queries(queries, num_sources_per_query=5)
-    combined_data_with_docker = github_processor.add_docker_info(combined_data)
-    combined_data_with_docker.save_to_yaml("github_repositories.yaml")
-    print(combined_data_with_docker.to_dict())
+    combined_data_with_docker_and_summary = github_processor.add_docker_and_summary_info(combined_data)
+    combined_data_with_docker_and_summary.save_to_yaml("github_repositories.yaml")
+    print(combined_data_with_docker_and_summary.to_dict())
