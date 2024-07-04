@@ -100,7 +100,7 @@ class YouTubeProcessor(SourceProcessor):
         if not transcript:
             return "Transcript not available."
         chunks = self.split_text_to_chunks(transcript, chunk_size=chunk_size)
-        questions = 'What is the best habit to fallow every day?'
+        questions = 'What is the best habit to follow every day?'
         Summary_format = """**Overview**
 
 
@@ -151,8 +151,20 @@ class YouTubeProcessor(SourceProcessor):
                 if combine_flag:
                     combined_summary = self.organize_summarization_into_one(summary)    
                 data_storage.data[source][title]["detailed_summary"] = summary
-                data_storage.data[source][title]["ummary"] = combined_summary
+                data_storage.data[source][title]["summary"] = combined_summary
+
+                # Process list of questions
+                questions = ['What is the best habit to follow every day?', "What Can I do to protect my skin?", "What seems to be the best habit to protect my skin?"]
+                for question in questions:
+                    is_relevant = self.ask_llama_relevance(question, transcript, summary)
+                    if "yes" in is_relevant.lower():
+                        answer = self.ask_llama_question(question, transcript, summary)
+                        if "questions" not in data_storage.data[source][title]:
+                            data_storage.data[source][title]["questions"] = {}
+                        data_storage.data[source][title]["questions"][question] = answer
+        
         return data_storage
+
     def organize_summarization_into_one(self, combined_text: str) -> str:
         prompt = (f"""You are an expert content information organizer. Combine and organize the following summaries into a single cohesive summary. 
                     Remove redundant informations.
@@ -174,7 +186,34 @@ class YouTubeProcessor(SourceProcessor):
         response = ollama.generate(model="llama3:instruct", prompt=prompt)
         organized_summary = response.get('response', "").strip()
         return organized_summary
-    
+
+    def ask_llama_relevance(self, question: str, details: str, detailed_summary: str) -> str:
+        text = details if len(self.tokenize(details)) <= 7500 else detailed_summary
+        prompt = f"""
+        Is the text below at least partially relevant to my question? Say Yes or No.
+
+        question:
+        {question}
+
+        text:
+        {text}
+        """
+        response = ollama.generate(model="llama3:instruct", prompt=prompt)
+        answer = response.get('response', "").strip()
+        return answer
+
+    def ask_llama_question(self, question: str, details: str, detailed_summary: str) -> str:
+        text = details if len(self.tokenize(details)) <= 7500 else detailed_summary
+        prompt = f"""
+        Based on the text, answer the question: {question}
+        
+        text:
+        {text}
+        """
+        response = ollama.generate(model="llama3:instruct", prompt=prompt)
+        answer = response.get('response', "").strip()
+        return answer
+
 if __name__ == "__main__":
     queries = ["Huberman podcast"]
     youtube_processor = YouTubeProcessor()
