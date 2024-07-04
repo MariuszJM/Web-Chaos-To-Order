@@ -1,0 +1,14 @@
+# Ignore Python bytecode files
+*.pyc
+
+# Ignore cache directories
+__pycache__/
+
+# Ignore configuration files and credentials
+config.py
+credentials.json
+
+token.json
+*.yaml
+tmp.py
+courser.py
