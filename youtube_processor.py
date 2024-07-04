@@ -7,8 +7,7 @@ from google.oauth2.credentials import Credentials
 from youtube_transcript_api import YouTubeTranscriptApi
 from data_storage import DataStorage
 from base_processor import SourceProcessor
-import ollama
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from LLMProcessor import LLMProcessor
 
 class YouTubeProcessor(SourceProcessor):
     SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
@@ -18,6 +17,7 @@ class YouTubeProcessor(SourceProcessor):
     def __init__(self, platform_name="YouTube"):
         self.platform_name = platform_name
         self.youtube = self.authenticate_youtube()
+        self.llm_processor = LLMProcessor()
 
     def authenticate_youtube(self):
         creds = None
@@ -89,130 +89,27 @@ class YouTubeProcessor(SourceProcessor):
             transcript_text = "Transcript not available."
         return transcript_text
 
-    def split_text_to_chunks(self, text, chunk_size=7500, chunk_overlap=150):
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap
-        )
-        return text_splitter.split_text(text)
-
-    def summarize_transcript(self, transcript, chunk_size=7500):
-        if not transcript:
-            return "Transcript not available."
-        chunks = self.split_text_to_chunks(transcript, chunk_size=chunk_size)
-        questions = 'What is the best habit to follow every day?'
-        Summary_format = """**Overview**
-
-
-      overwiew content...
-
-
-      **first summary point name**
-
-
-      First summary point content...
-      
-      **second summary point name**
-
-
-      Second summary point content...
-      
-      etc...
-
-"""
-        summaries = []
-        for chunk in chunks:
-            prompt = (f"""You are an expert content summarizer. Summarize the video based on the following transcript. 
-                      Focus on essential information and answer the following questions: {questions}
-                      Use bullet points and separate each point with a newline and the following output format: {Summary_format}.
-                      Transcript: {chunk}""")
-            response = ollama.generate(model="llama3:instruct", prompt=prompt)
-            summary = response.get('response', "").strip()
-            summaries.append(summary)
-        
-        combine_flag = False
-        if len(summaries) > 1:
-            combine_flag = True
-
-        combined_summary = "\n".join(summaries)
-        if len(self.tokenize(combined_summary)) > 7500:
-            combined_summary, _ = self.summarize_transcript(combined_summary, chunk_size=7500)
-        
-        return combined_summary, combine_flag
-
-    def tokenize(self, text):
-        return text.split()
-
     def add_summary_info(self, data_storage: DataStorage) -> DataStorage:
         for source in data_storage.data.keys():
             for title in data_storage.data[source].keys():
                 transcript = data_storage.data[source][title]["details"]
-                summary, combine_flag = self.summarize_transcript(transcript)
+                summary, combine_flag = self.llm_processor.summarize_transcript(transcript)
                 if combine_flag:
-                    combined_summary = self.organize_summarization_into_one(summary)    
+                    combined_summary = self.llm_processor.organize_summarization_into_one(summary)    
                 data_storage.data[source][title]["detailed_summary"] = summary
                 data_storage.data[source][title]["summary"] = combined_summary
 
                 # Process list of questions
                 questions = ['What is the best habit to follow every day?', "What Can I do to protect my skin?", "What seems to be the best habit to protect my skin?"]
                 for question in questions:
-                    is_relevant = self.ask_llama_relevance(question, transcript, summary)
+                    is_relevant = self.llm_processor.ask_llama_relevance(question, transcript, summary)
                     if "yes" in is_relevant.lower():
-                        answer = self.ask_llama_question(question, transcript, summary)
+                        answer = self.llm_processor.ask_llama_question(question, transcript, summary)
                         if "questions" not in data_storage.data[source][title]:
                             data_storage.data[source][title]["questions"] = {}
                         data_storage.data[source][title]["questions"][question] = answer
         
         return data_storage
-
-    def organize_summarization_into_one(self, combined_text: str) -> str:
-        prompt = (f"""You are an expert content information organizer. Combine and organize the following summaries into a single cohesive summary. 
-                    Remove redundant informations.
-                    Make it  as detaild as possible. The output shouldn't be much smaller that the input. You are not summarizer just organizer.
-                    Use bullet points and the following output format:
-                    
-                    **Overview**
-
-                    Overview content...
-
-                    **Summary Points**
-
-                    - First summary point content...
-                    - Second summary point content...
-                    - etc...
-
-                    Summaries: {combined_text}""")
-
-        response = ollama.generate(model="llama3:instruct", prompt=prompt)
-        organized_summary = response.get('response', "").strip()
-        return organized_summary
-
-    def ask_llama_relevance(self, question: str, details: str, detailed_summary: str) -> str:
-        text = details if len(self.tokenize(details)) <= 7500 else detailed_summary
-        prompt = f"""
-        Is the text below at least partially relevant to my question? Say Yes or No.
-
-        question:
-        {question}
-
-        text:
-        {text}
-        """
-        response = ollama.generate(model="llama3:instruct", prompt=prompt)
-        answer = response.get('response', "").strip()
-        return answer
-
-    def ask_llama_question(self, question: str, details: str, detailed_summary: str) -> str:
-        text = details if len(self.tokenize(details)) <= 7500 else detailed_summary
-        prompt = f"""
-        Based on the text, answer the question: {question}
-        
-        text:
-        {text}
-        """
-        response = ollama.generate(model="llama3:instruct", prompt=prompt)
-        answer = response.get('response', "").strip()
-        return answer
 
 if __name__ == "__main__":
     queries = ["Huberman podcast"]
