@@ -116,13 +116,13 @@ class UdemyProcessor(SourceProcessor):
             
             if len(self.llm_processor.tokenize(details_str)) > 7500:
                 detailed_summary, _ = self.llm_processor.summarize_transcript(details_str)
-                data_storage.data[self.platform_name][course_title]["Detailed Summary"] = detailed_summary
+                data_storage.data[self.platform_name][course_title]["detailed_summary"] = detailed_summary
                 combined_summary = self.llm_processor.organize_summarization_into_one(detailed_summary)
-                data_storage.data[self.platform_name][course_title]["Summary"] = combined_summary
+                data_storage.data[self.platform_name][course_title]["summary"] = combined_summary
                 summary_source = detailed_summary
             else:
                 summary = self.llm_processor.summarize_readme(details_str)
-                data_storage.data[self.platform_name][course_title]["Summary"] = summary
+                data_storage.data[self.platform_name][course_title]["summary"] = summary
                 summary_source = details_str
 
             # Process list of questions

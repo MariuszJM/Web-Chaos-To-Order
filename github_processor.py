@@ -85,7 +85,7 @@ class GitHubProcessor(SourceProcessor):
         for repo_full_name in data_storage.data[self.platform_name].keys():
             readme_content = self.get_readme_content(repo_full_name)
             summary = self.llm_processor.summarize_readme(readme_content)
-            data_storage.data[self.platform_name][repo_full_name]["Summary"] = summary
+            data_storage.data[self.platform_name][repo_full_name]["summary"] = summary
 
             # Process list of questions
             questions = ["Does the project support Docker?"]
