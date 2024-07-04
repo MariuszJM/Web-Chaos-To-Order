@@ -15,12 +15,12 @@ class UdemyProcessor(SourceProcessor):
         self.encoded_credentials = encoded_credentials
         self.llm_processor = LLMProcessor()
 
-    def combine_multiple_queries(self, queries: List[str], num_sources_per_query: int) -> DataStorage:
+    def combine_multiple_queries(self, queries: List[str], num_sources_per_query: int, questions: List[str]) -> DataStorage:
         combined_storage = DataStorage()
         for query in queries:
             query_storage = self.process_query(query, num_sources_per_query)
             combined_storage.combine(query_storage)
-        combined_storage = self.add_summary_info(combined_storage)
+        combined_storage = self.add_summary_info(combined_storage, questions)
         return combined_storage
 
     def process_query(self, query: str, num_top_sources: int) -> DataStorage:
@@ -107,7 +107,7 @@ class UdemyProcessor(SourceProcessor):
         print(f"Structured curriculum: {content}")  # Debugging output
         return content
 
-    def add_summary_info(self, data_storage: DataStorage) -> DataStorage:
+    def add_summary_info(self, data_storage: DataStorage, questions: List[str]) -> DataStorage:
         for course_title in data_storage.data[self.platform_name].keys():
             details = data_storage.data[self.platform_name][course_title]["details"]
             details_str = "\n".join(
@@ -125,8 +125,6 @@ class UdemyProcessor(SourceProcessor):
                 data_storage.data[self.platform_name][course_title]["summary"] = summary
                 summary_source = details_str
 
-            # Process list of questions
-            questions = ["What is the best habit to follow every day?"]
             for question in questions:
                 answer = self.llm_processor.ask_llama_question(question, details_str, summary_source)
                 if "Q&A" not in data_storage.data[self.platform_name][course_title]:
@@ -140,9 +138,10 @@ if __name__ == "__main__":
     encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
 
     queries = ["machine learning"]
+    questions = ["What is the best habit to follow every day?", "What are the prerequisites for this course?"]
     udemy_processor = UdemyProcessor(encoded_credentials)
     combined_data = udemy_processor.combine_multiple_queries(
-        queries, num_sources_per_query=1
+        queries, num_sources_per_query=1, questions=questions
     )
     combined_data.save_to_yaml("udemy_courses.yaml")
     print(combined_data.to_dict())

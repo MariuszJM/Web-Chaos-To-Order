@@ -30,12 +30,12 @@ class YouTubeProcessor(SourceProcessor):
                 token.write(creds.to_json())
         return build("youtube", "v3", credentials=creds)
 
-    def combine_multiple_queries(self, queries: List[str], num_sources_per_query: int) -> DataStorage:
+    def combine_multiple_queries(self, queries: List[str], num_sources_per_query: int, questions: List[str]) -> DataStorage:
         combined_storage = DataStorage()
         for query in queries:
             query_storage = self.process_query(query, num_sources_per_query)
             combined_storage.combine(query_storage)
-        combined_storage = self.add_summary_info(combined_storage)
+        combined_storage = self.add_summary_info(combined_storage, questions)
         return combined_storage
 
     def process_query(self, query: str, num_top_sources: int) -> DataStorage:
@@ -89,18 +89,17 @@ class YouTubeProcessor(SourceProcessor):
             transcript_text = "Transcript not available."
         return transcript_text
 
-    def add_summary_info(self, data_storage: DataStorage) -> DataStorage:
+    def add_summary_info(self, data_storage: DataStorage, questions: List[str]) -> DataStorage:
         for source in data_storage.data.keys():
             for title in data_storage.data[source].keys():
                 transcript = data_storage.data[source][title]["details"]
                 summary, combine_flag = self.llm_processor.summarize_transcript(transcript)
+                combined_summary = None
                 if combine_flag:
-                    combined_summary = self.llm_processor.organize_summarization_into_one(summary)    
+                    combined_summary = self.llm_processor.organize_summarization_into_one(summary)
                 data_storage.data[source][title]["detailed_summary"] = summary
                 data_storage.data[source][title]["summary"] = combined_summary
 
-                # Process list of questions
-                questions = ['What is the best habit to follow every day?', "What Can I do to protect my skin?", "What seems to be the best habit to protect my skin?"]
                 for question in questions:
                     answer = self.llm_processor.ask_llama_question(question, transcript, summary)
                     if "Q&A" not in data_storage.data[source][title]:
@@ -111,7 +110,8 @@ class YouTubeProcessor(SourceProcessor):
 
 if __name__ == "__main__":
     queries = ["Huberman podcast"]
+    questions = ['What is the best habit to follow every day?', "What Can I do to protect my skin?", "What seems to be the best habit to protect my skin?"]
     youtube_processor = YouTubeProcessor()
-    combined_data = youtube_processor.combine_multiple_queries(queries, num_sources_per_query=1)
+    combined_data = youtube_processor.combine_multiple_queries(queries, num_sources_per_query=1, questions=questions)
     combined_data.save_to_yaml("youtube_data.yaml")
     print(combined_data.to_dict())

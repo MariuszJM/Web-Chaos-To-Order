@@ -15,13 +15,13 @@ class GitHubProcessor(SourceProcessor):
         self.llm_processor = LLMProcessor()
 
     def combine_multiple_queries(
-        self, queries: List[str], num_sources_per_query: int
+        self, queries: List[str], num_sources_per_query: int, questions: List[str]
     ) -> DataStorage:
         combined_storage = DataStorage()
         for query in queries:
             query_storage = self.process_query(query, num_sources_per_query)
             combined_storage.combine(query_storage)
-        combined_storage = self.add_summary_info(combined_storage)
+        combined_storage = self.add_summary_info(combined_storage, questions)
         return combined_storage
 
     def process_query(self, query: str, num_top_sources: int) -> DataStorage:
@@ -81,14 +81,12 @@ class GitHubProcessor(SourceProcessor):
             print(f"Failed to fetch README for {repo_full_name}. Status code: {response.status_code}")
             return ""
 
-    def add_summary_info(self, data_storage: DataStorage) -> DataStorage:
+    def add_summary_info(self, data_storage: DataStorage, questions: List[str]) -> DataStorage:
         for repo_full_name in data_storage.data[self.platform_name].keys():
             readme_content = self.get_readme_content(repo_full_name)
             summary = self.llm_processor.summarize_readme(readme_content)
             data_storage.data[self.platform_name][repo_full_name]["summary"] = summary
 
-            # Process list of questions
-            questions = ["Does the project support Docker?"]
             for question in questions:
                 answer = self.llm_processor.ask_llama_question(question, readme_content, summary)
                 if "Q&A" not in data_storage.data[self.platform_name][repo_full_name]:
@@ -100,7 +98,8 @@ class GitHubProcessor(SourceProcessor):
 
 if __name__ == "__main__":
     queries = ["Open Web UI"]
+    questions = ["Does the project support Docker?", "Is there a contribution guide?"]
     github_processor = GitHubProcessor()
-    combined_data = github_processor.combine_multiple_queries(queries, num_sources_per_query=5)
+    combined_data = github_processor.combine_multiple_queries(queries, num_sources_per_query=5, questions=questions)
     combined_data.save_to_yaml("github_repositories.yaml")
     print(combined_data.to_dict())
