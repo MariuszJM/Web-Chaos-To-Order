@@ -102,12 +102,10 @@ class YouTubeProcessor(SourceProcessor):
                 # Process list of questions
                 questions = ['What is the best habit to follow every day?', "What Can I do to protect my skin?", "What seems to be the best habit to protect my skin?"]
                 for question in questions:
-                    is_relevant = self.llm_processor.ask_llama_relevance(question, transcript, summary)
-                    if "yes" in is_relevant.lower():
-                        answer = self.llm_processor.ask_llama_question(question, transcript, summary)
-                        if "questions" not in data_storage.data[source][title]:
-                            data_storage.data[source][title]["questions"] = {}
-                        data_storage.data[source][title]["questions"][question] = answer
+                    answer = self.llm_processor.ask_llama_question(question, transcript, summary)
+                    if "Q&A" not in data_storage.data[source][title]:
+                        data_storage.data[source][title]["Q&A"] = {}
+                    data_storage.data[source][title]["Q&A"][question] = answer
         
         return data_storage
 

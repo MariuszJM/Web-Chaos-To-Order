@@ -62,7 +62,7 @@ class LLMProcessor:
     def organize_summarization_into_one(self, combined_text: str) -> str:
         prompt = (f"""You are an expert content information organizer. Combine and organize the following summaries into a single cohesive summary. 
                     Remove redundant informations.
-                    Make it  as detaild as possible. The output shouldn't be much smaller that the input. You are not summarizer just organizer.
+                    Make it as detailed as possible. The output shouldn't be much smaller than the input. You are not summarizer just organizer.
                     Use bullet points and the following output format:
                     
                     **Overview**
@@ -80,21 +80,6 @@ class LLMProcessor:
         response = ollama.generate(model="llama3:instruct", prompt=prompt)
         organized_summary = response.get('response', "").strip()
         return organized_summary
-
-    def ask_llama_relevance(self, question: str, details: str, detailed_summary: str) -> str:
-        text = details if len(self.tokenize(details)) <= 7500 else detailed_summary
-        prompt = f"""
-        Is the text below at least partially relevant to my question? Say Yes or No.
-
-        question:
-        {question}
-
-        text:
-        {text}
-        """
-        response = ollama.generate(model="llama3:instruct", prompt=prompt)
-        answer = response.get('response', "").strip()
-        return answer
 
     def ask_llama_question(self, question: str, details: str, detailed_summary: str) -> str:
         text = details if len(self.tokenize(details)) <= 7500 else detailed_summary
