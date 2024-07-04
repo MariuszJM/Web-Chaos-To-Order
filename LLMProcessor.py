@@ -13,62 +13,28 @@ class LLMProcessor:
         )
         return text_splitter.split_text(text)
 
-    def summarize_readme(self, readme_content: str) -> str:
-        if not readme_content:
-            return "No README content available."
+    def summarize(self, content: str, chunk_size=7500) -> str:
+        if not content:
+            return "Content not available."
 
-        prompt = (
-            f"You are an expert content summarizer. Summarize the project based on the following README content in up to 10 points with new line between each point; "
-            f"Focus on essential information to be able to understand the project and be able to run it; Don't add any comments just summary: {readme_content}"
-        )
-        response = ollama.generate(model=self.model_name, prompt=prompt)
-        summary = response.get('response', "").strip()
-
-        return summary
-
-    def summarize_transcript(self, transcript, chunk_size=7500):
-        if not transcript:
-            return "Transcript not available."
-        chunks = self.split_text_to_chunks(transcript, chunk_size=chunk_size)
-        questions = 'What is the best habit to follow every day?'
-        Summary_format = """**Overview**
-
-
-      overview content...
-
-
-      **first summary point name**
-
-
-      First summary point content...
-      
-      **second summary point name**
-
-
-      Second summary point content...
-      
-      etc...
-
-"""
+        chunks = self.split_text_to_chunks(content, chunk_size=chunk_size)
         summaries = []
+        
         for chunk in chunks:
-            prompt = (f"""You are an expert content summarizer. Summarize the video based on the following transcript. 
-                      Focus on essential information and answer the following questions: {questions}
-                      Use bullet points and separate each point with a newline and the following output format: {Summary_format}.
-                      Transcript: {chunk}""")
+            prompt = (
+                f"You are an expert content summarizer. Summarize the content based on the following text in up to 10 points with a newline between each point; "
+                f"Focus on essential information to understand the content and be able to use it effectively; Don't add any comments, just summary: {chunk}"
+            )
             response = ollama.generate(model=self.model_name, prompt=prompt)
             summary = response.get('response', "").strip()
             summaries.append(summary)
-        
-        combine_flag = False
-        if len(summaries) > 1:
-            combine_flag = True
 
         combined_summary = "\n".join(summaries)
-        if len(self.tokenize(combined_summary)) > 7500:
-            combined_summary, _ = self.summarize_transcript(combined_summary, chunk_size=7500)
         
-        return combined_summary, combine_flag
+        if len(self.tokenize(combined_summary)) > 7500:
+            combined_summary, _ = self.summarize_content(combined_summary, chunk_size=7500)
+        
+        return combined_summary, len(summaries) > 1
 
     def tokenize(self, text: str) -> List[str]:
         return text.split()

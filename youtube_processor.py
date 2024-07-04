@@ -93,7 +93,7 @@ class YouTubeProcessor(SourceProcessor):
         for source in data_storage.data.keys():
             for title in data_storage.data[source].keys():
                 transcript = data_storage.data[source][title]["details"]
-                summary, combine_flag = self.llm_processor.summarize_transcript(transcript)
+                summary, combine_flag = self.llm_processor.summarize(transcript)
                 combined_summary = None
                 if combine_flag:
                     combined_summary = self.llm_processor.organize_summarization_into_one(summary)
@@ -109,7 +109,7 @@ class YouTubeProcessor(SourceProcessor):
         return data_storage
 
 if __name__ == "__main__":
-    queries = ["Huberman podcast"]
+    queries = ["Huberman"]
     questions = ['What is the best habit to follow every day?', "What Can I do to protect my skin?", "What seems to be the best habit to protect my skin?"]
     youtube_processor = YouTubeProcessor()
     combined_data = youtube_processor.combine_multiple_queries(queries, num_sources_per_query=1, questions=questions)
