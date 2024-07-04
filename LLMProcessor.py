@@ -1,9 +1,10 @@
 import ollama
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from typing import List
 
 class LLMProcessor:
-    def __init__(self):
-        pass
+    def __init__(self, model_name="llama3:instruct"):
+        self.model_name = model_name
 
     def split_text_to_chunks(self, text, chunk_size=7500, chunk_overlap=150):
         text_splitter = RecursiveCharacterTextSplitter(
@@ -11,6 +12,19 @@ class LLMProcessor:
             chunk_overlap=chunk_overlap
         )
         return text_splitter.split_text(text)
+
+    def summarize_readme(self, readme_content: str) -> str:
+        if not readme_content:
+            return "No README content available."
+
+        prompt = (
+            f"You are an expert content summarizer. Summarize the project based on the following README content in up to 10 points with new line between each point; "
+            f"Focus on essential information to be able to understand the project and be able to run it; Don't add any comments just summary: {readme_content}"
+        )
+        response = ollama.generate(model=self.model_name, prompt=prompt)
+        summary = response.get('response', "").strip()
+
+        return summary
 
     def summarize_transcript(self, transcript, chunk_size=7500):
         if not transcript:
@@ -20,7 +34,7 @@ class LLMProcessor:
         Summary_format = """**Overview**
 
 
-      overwiew content...
+      overview content...
 
 
       **first summary point name**
@@ -42,7 +56,7 @@ class LLMProcessor:
                       Focus on essential information and answer the following questions: {questions}
                       Use bullet points and separate each point with a newline and the following output format: {Summary_format}.
                       Transcript: {chunk}""")
-            response = ollama.generate(model="llama3:instruct", prompt=prompt)
+            response = ollama.generate(model=self.model_name, prompt=prompt)
             summary = response.get('response', "").strip()
             summaries.append(summary)
         
@@ -56,7 +70,7 @@ class LLMProcessor:
         
         return combined_summary, combine_flag
 
-    def tokenize(self, text):
+    def tokenize(self, text: str) -> List[str]:
         return text.split()
 
     def organize_summarization_into_one(self, combined_text: str) -> str:
@@ -77,7 +91,7 @@ class LLMProcessor:
 
                     Summaries: {combined_text}""")
 
-        response = ollama.generate(model="llama3:instruct", prompt=prompt)
+        response = ollama.generate(model=self.model_name, prompt=prompt)
         organized_summary = response.get('response', "").strip()
         return organized_summary
 
@@ -89,6 +103,6 @@ class LLMProcessor:
         text:
         {text}
         """
-        response = ollama.generate(model="llama3:instruct", prompt=prompt)
+        response = ollama.generate(model=self.model_name, prompt=prompt)
         answer = response.get('response', "").strip()
         return answer

@@ -3,9 +3,8 @@ import base64
 from typing import List
 from data_storage import DataStorage
 from base_processor import SourceProcessor
-import ollama
 from config import GITHUB_TOKEN
-
+from LLMProcessor import LLMProcessor
 
 class GitHubProcessor(SourceProcessor):
     BASE_URL = "https://api.github.com/search/repositories"
@@ -13,6 +12,7 @@ class GitHubProcessor(SourceProcessor):
 
     def __init__(self, platform_name="GitHub"):
         self.platform_name = platform_name
+        self.llm_processor = LLMProcessor()
 
     def combine_multiple_queries(
         self, queries: List[str], num_sources_per_query: int
@@ -81,41 +81,16 @@ class GitHubProcessor(SourceProcessor):
             print(f"Failed to fetch README for {repo_full_name}. Status code: {response.status_code}")
             return ""
 
-    def summarize_readme(self, readme_content):
-        if not readme_content:
-            return "No README content available."
-
-        prompt = f"You are an expert content summarizer. Summarize the project based on the following README content in up to 10 points with new line between each point; Focus on essential informations to be able to understand the project and be able to run it; Don't add any comments just summary: {readme_content}"
-        response = ollama.generate(model="llama3:instruct", prompt=prompt)
-        summary = response.get('response', "").strip()
-
-        return summary
-
-    def tokenize(self, text: str) -> List[str]:
-        return text.split()
-
-    def ask_llama_question(self, question: str, readme_content: str, summary: str) -> str:
-        text = readme_content if len(self.tokenize(readme_content)) <= 7500 else summary
-        prompt = f"""
-        Based on the text, answer the question: {question}
-        
-        text:
-        {text}
-        """
-        response = ollama.generate(model="llama3:instruct", prompt=prompt)
-        answer = response.get('response', "").strip()
-        return answer
-
     def add_summary_info(self, data_storage: DataStorage) -> DataStorage:
         for repo_full_name in data_storage.data[self.platform_name].keys():
             readme_content = self.get_readme_content(repo_full_name)
-            summary = self.summarize_readme(readme_content)
+            summary = self.llm_processor.summarize_readme(readme_content)
             data_storage.data[self.platform_name][repo_full_name]["Summary"] = summary
 
             # Process list of questions
             questions = ["Does the project support Docker?"]
             for question in questions:
-                answer = self.ask_llama_question(question, readme_content, summary)
+                answer = self.llm_processor.ask_llama_question(question, readme_content, summary)
                 if "Q&A" not in data_storage.data[self.platform_name][repo_full_name]:
                     data_storage.data[self.platform_name][repo_full_name]["Q&A"] = {}
                 data_storage.data[self.platform_name][repo_full_name]["Q&A"][question] = answer
