@@ -3,6 +3,8 @@ import requests
 from typing import List, Dict
 from data_storage import DataStorage
 from base_processor import SourceProcessor
+from config import UDEMY_SECRET_KEY, UDEMY_CLIENT_ID
+from LLMProcessor import LLMProcessor
 
 class UdemyProcessor(SourceProcessor):
     BASE_URL = "https://www.udemy.com/api-2.0/courses/"
@@ -11,12 +13,14 @@ class UdemyProcessor(SourceProcessor):
     def __init__(self, encoded_credentials, platform_name="Udemy"):
         self.platform_name = platform_name
         self.encoded_credentials = encoded_credentials
+        self.llm_processor = LLMProcessor()
 
     def combine_multiple_queries(self, queries: List[str], num_sources_per_query: int) -> DataStorage:
         combined_storage = DataStorage()
         for query in queries:
             query_storage = self.process_query(query, num_sources_per_query)
             combined_storage.combine(query_storage)
+        combined_storage = self.add_summary_info(combined_storage)
         return combined_storage
 
     def process_query(self, query: str, num_top_sources: int) -> DataStorage:
@@ -103,10 +107,36 @@ class UdemyProcessor(SourceProcessor):
         print(f"Structured curriculum: {content}")  # Debugging output
         return content
 
+    def add_summary_info(self, data_storage: DataStorage) -> DataStorage:
+        for course_title in data_storage.data[self.platform_name].keys():
+            details = data_storage.data[self.platform_name][course_title]["details"]
+            details_str = "\n".join(
+                [f"{chapter}: {', '.join(lectures)}" for chapter, lectures in details.items()]
+            )
+            
+            if len(self.llm_processor.tokenize(details_str)) > 7500:
+                detailed_summary, _ = self.llm_processor.summarize_transcript(details_str)
+                data_storage.data[self.platform_name][course_title]["Detailed Summary"] = detailed_summary
+                combined_summary = self.llm_processor.organize_summarization_into_one(detailed_summary)
+                data_storage.data[self.platform_name][course_title]["Summary"] = combined_summary
+                summary_source = detailed_summary
+            else:
+                summary = self.llm_processor.summarize_readme(details_str)
+                data_storage.data[self.platform_name][course_title]["Summary"] = summary
+                summary_source = details_str
+
+            # Process list of questions
+            questions = ["What is the best habit to follow every day?"]
+            for question in questions:
+                answer = self.llm_processor.ask_llama_question(question, details_str, summary_source)
+                if "Q&A" not in data_storage.data[self.platform_name][course_title]:
+                    data_storage.data[self.platform_name][course_title]["Q&A"] = {}
+                data_storage.data[self.platform_name][course_title]["Q&A"][question] = answer
+
+        return data_storage
+
 if __name__ == "__main__":
-    client_id = "EQV1wN90hOxti5k7lAr5qVQrXJGFhfLtvJYju6ig"
-    client_secret = "lv3eiNXhLgVXz5dIneO11J2sFe6r5rqJKHVtw1f2nRQ6O7vfyumOXB1qS3vvmKsmdQhWuaYRh14BTWksOvzTEWgL0mVW7vIgFHuIx7IDQVJSf0bpyBGTiz2Fl3yLub7i"
-    credentials = f"{client_id}:{client_secret}"
+    credentials = f"{UDEMY_CLIENT_ID}:{UDEMY_SECRET_KEY}"
     encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
 
     queries = ["machine learning"]
