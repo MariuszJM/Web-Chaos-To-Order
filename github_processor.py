@@ -33,6 +33,8 @@ class GitHubProcessor(SourceProcessor):
         top_data_storage = DataStorage()
         for repo in repositories:
             repo_info = self.get_repo_info(repo)
+            readme_content = self.get_readme_content(repo["full_name"])
+            repo_info["details"] = {"readme_content": readme_content}
             top_data_storage.add_data(self.platform_name, repo["full_name"], **repo_info)
 
         return top_data_storage
