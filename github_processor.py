@@ -92,7 +92,7 @@ class GitHubProcessor(SourceProcessor):
         if not readme_content:
             return "No README content available."
 
-        prompt = f"Summarize in detail the project based on the following README content; Don't add any comments just summary: {readme_content}"
+        prompt = f"You are an expert content summarizer. Summarize the project based on the following README content in up to 10 points with new line beetween each point; Focus on essential informations to be able tu understand the project and be able to run it; Don't add any comments just summary: {readme_content}"
         response = ollama.generate(model="llama3:instruct", prompt=prompt)
         summary = response.get('response', "").strip()
 
@@ -109,7 +109,7 @@ class GitHubProcessor(SourceProcessor):
 
 
 if __name__ == "__main__":
-    queries = ["Open Web UI", "data science"]
+    queries = ["Open Web UI"]
     github_processor = GitHubProcessor()
     combined_data = github_processor.combine_multiple_queries(queries, num_sources_per_query=5)
     combined_data_with_docker_and_summary = github_processor.add_docker_and_summary_info(combined_data)
