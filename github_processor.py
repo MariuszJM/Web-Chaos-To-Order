@@ -21,6 +21,7 @@ class GitHubProcessor(SourceProcessor):
         for query in queries:
             query_storage = self.process_query(query, num_sources_per_query)
             combined_storage.combine(query_storage)
+        combined_storage = self.add_summary_info(combined_storage)
         return combined_storage
 
     def process_query(self, query: str, num_top_sources: int) -> DataStorage:
@@ -34,7 +35,7 @@ class GitHubProcessor(SourceProcessor):
         for repo in repositories:
             repo_info = self.get_repo_info(repo)
             readme_content = self.get_readme_content(repo["full_name"])
-            repo_info["details"] = {"readme_content": readme_content}
+            repo_info["details"] = readme_content
             top_data_storage.add_data(self.platform_name, repo["full_name"], **repo_info)
 
         return top_data_storage
@@ -80,33 +81,45 @@ class GitHubProcessor(SourceProcessor):
             print(f"Failed to fetch README for {repo_full_name}. Status code: {response.status_code}")
             return ""
 
-    def check_docker_support(self, readme_content):
-        if not readme_content:
-            return False
-
-        prompt = f"Is in this project any information how to run the project with Docker; Please Answer Yes Or No; Project info:{readme_content}"
-        response = ollama.generate(model="llama3:instruct", prompt=prompt)
-        answer = response.get('response', "").strip().lower()
-
-        return 'yes' in answer
-
     def summarize_readme(self, readme_content):
         if not readme_content:
             return "No README content available."
 
-        prompt = f"You are an expert content summarizer. Summarize the project based on the following README content in up to 10 points with new line beetween each point; Focus on essential informations to be able tu understand the project and be able to run it; Don't add any comments just summary: {readme_content}"
+        prompt = f"You are an expert content summarizer. Summarize the project based on the following README content in up to 10 points with new line between each point; Focus on essential informations to be able to understand the project and be able to run it; Don't add any comments just summary: {readme_content}"
         response = ollama.generate(model="llama3:instruct", prompt=prompt)
         summary = response.get('response', "").strip()
 
         return summary
 
-    def add_docker_and_summary_info(self, data_storage: DataStorage) -> DataStorage:
+    def tokenize(self, text: str) -> List[str]:
+        return text.split()
+
+    def ask_llama_question(self, question: str, readme_content: str, summary: str) -> str:
+        text = readme_content if len(self.tokenize(readme_content)) <= 7500 else summary
+        prompt = f"""
+        Based on the text, answer the question: {question}
+        
+        text:
+        {text}
+        """
+        response = ollama.generate(model="llama3:instruct", prompt=prompt)
+        answer = response.get('response', "").strip()
+        return answer
+
+    def add_summary_info(self, data_storage: DataStorage) -> DataStorage:
         for repo_full_name in data_storage.data[self.platform_name].keys():
             readme_content = self.get_readme_content(repo_full_name)
-            docker_support = self.check_docker_support(readme_content)
             summary = self.summarize_readme(readme_content)
-            data_storage.data[self.platform_name][repo_full_name]["Docker"] = docker_support
             data_storage.data[self.platform_name][repo_full_name]["Summary"] = summary
+
+            # Process list of questions
+            questions = ["Does the project support Docker?"]
+            for question in questions:
+                answer = self.ask_llama_question(question, readme_content, summary)
+                if "Q&A" not in data_storage.data[self.platform_name][repo_full_name]:
+                    data_storage.data[self.platform_name][repo_full_name]["Q&A"] = {}
+                data_storage.data[self.platform_name][repo_full_name]["Q&A"][question] = answer
+
         return data_storage
 
 
@@ -114,6 +127,5 @@ if __name__ == "__main__":
     queries = ["Open Web UI"]
     github_processor = GitHubProcessor()
     combined_data = github_processor.combine_multiple_queries(queries, num_sources_per_query=5)
-    combined_data_with_docker_and_summary = github_processor.add_docker_and_summary_info(combined_data)
-    combined_data_with_docker_and_summary.save_to_yaml("github_repositories.yaml")
-    print(combined_data_with_docker_and_summary.to_dict())
+    combined_data.save_to_yaml("github_repositories.yaml")
+    print(combined_data.to_dict())
