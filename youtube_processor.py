@@ -7,7 +7,8 @@ from google.oauth2.credentials import Credentials
 from youtube_transcript_api import YouTubeTranscriptApi
 from data_storage import DataStorage
 from base_processor import SourceProcessor
-
+import ollama
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 class YouTubeProcessor(SourceProcessor):
     SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
@@ -34,6 +35,7 @@ class YouTubeProcessor(SourceProcessor):
         for query in queries:
             query_storage = self.process_query(query, num_sources_per_query)
             combined_storage.combine(query_storage)
+        combined_storage = self.add_summary_info(combined_storage)
         return combined_storage
 
     def process_query(self, query: str, num_top_sources: int) -> DataStorage:
@@ -87,10 +89,95 @@ class YouTubeProcessor(SourceProcessor):
             transcript_text = "Transcript not available."
         return transcript_text
 
+    def split_text_to_chunks(self, text, chunk_size=7500, chunk_overlap=150):
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap
+        )
+        return text_splitter.split_text(text)
 
+    def summarize_transcript(self, transcript, chunk_size=7500):
+        if not transcript:
+            return "Transcript not available."
+        chunks = self.split_text_to_chunks(transcript, chunk_size=chunk_size)
+        questions = 'What is the best habit to fallow every day?'
+        Summary_format = """**Overview**
+
+
+      overwiew content...
+
+
+      **first summary point name**
+
+
+      First summary point content...
+      
+      **second summary point name**
+
+
+      Second summary point content...
+      
+      etc...
+
+"""
+        summaries = []
+        for chunk in chunks:
+            prompt = (f"""You are an expert content summarizer. Summarize the video based on the following transcript. 
+                      Focus on essential information and answer the following questions: {questions}
+                      Use bullet points and separate each point with a newline and the following output format: {Summary_format}.
+                      Transcript: {chunk}""")
+            response = ollama.generate(model="llama3:instruct", prompt=prompt)
+            summary = response.get('response', "").strip()
+            summaries.append(summary)
+        
+        combine_flag = False
+        if len(summaries) > 1:
+            combine_flag = True
+
+        combined_summary = "\n".join(summaries)
+        if len(self.tokenize(combined_summary)) > 7500:
+            combined_summary, _ = self.summarize_transcript(combined_summary, chunk_size=7500)
+        
+        return combined_summary, combine_flag
+
+    def tokenize(self, text):
+        return text.split()
+
+    def add_summary_info(self, data_storage: DataStorage) -> DataStorage:
+        for source in data_storage.data.keys():
+            for title in data_storage.data[source].keys():
+                transcript = data_storage.data[source][title]["details"]
+                summary, combine_flag = self.summarize_transcript(transcript)
+                if combine_flag:
+                    combined_summary = self.organize_summarization_into_one(summary)    
+                data_storage.data[source][title]["detailed_summary"] = summary
+                data_storage.data[source][title]["ummary"] = combined_summary
+        return data_storage
+    def organize_summarization_into_one(self, combined_text: str) -> str:
+        prompt = (f"""You are an expert content information organizer. Combine and organize the following summaries into a single cohesive summary. 
+                    Remove redundant informations.
+                    Make it  as detaild as possible. The output shouldn't be much smaller that the input. You are not summarizer just organizer.
+                    Use bullet points and the following output format:
+                    
+                    **Overview**
+
+                    Overview content...
+
+                    **Summary Points**
+
+                    - First summary point content...
+                    - Second summary point content...
+                    - etc...
+
+                    Summaries: {combined_text}""")
+
+        response = ollama.generate(model="llama3:instruct", prompt=prompt)
+        organized_summary = response.get('response', "").strip()
+        return organized_summary
+    
 if __name__ == "__main__":
-    queries = ["Python tutorial", "Python"]
+    queries = ["Huberman podcast"]
     youtube_processor = YouTubeProcessor()
-    combined_data = youtube_processor.combine_multiple_queries(queries, num_sources_per_query=5)
+    combined_data = youtube_processor.combine_multiple_queries(queries, num_sources_per_query=1)
     combined_data.save_to_yaml("youtube_data.yaml")
     print(combined_data.to_dict())
