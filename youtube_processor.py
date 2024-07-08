@@ -6,6 +6,8 @@ from google.oauth2.credentials import Credentials
 from youtube_transcript_api import YouTubeTranscriptApi
 from data_storage import DataStorage
 from base_processor import SourceProcessor
+from google.auth.transport.requests import Request
+
 
 class YouTubeProcessor(SourceProcessor):
     SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
@@ -20,11 +22,16 @@ class YouTubeProcessor(SourceProcessor):
         creds = None
         if os.path.exists(self.TOKEN_PATH):
             creds = Credentials.from_authorized_user_file(self.TOKEN_PATH, self.SCOPES)
+        
         if not creds or not creds.valid:
-            flow = InstalledAppFlow.from_client_secrets_file(self.CREDENTIALS_FILE, self.SCOPES)
-            creds = flow.run_local_server(port=0)
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(self.CREDENTIALS_FILE, self.SCOPES)
+                creds = flow.run_local_server(port=0)
             with open(self.TOKEN_PATH, "w") as token:
                 token.write(creds.to_json())
+
         return build("youtube", "v3", credentials=creds)
 
     def process_query(self, query: str, num_top_sources: int) -> DataStorage:
@@ -80,7 +87,7 @@ class YouTubeProcessor(SourceProcessor):
 
 
 if __name__ == "__main__":
-    queries = ["Huberman"]
+    queries = ["fine tuning"]
     questions = ['What is the best habit to follow every day?', "What Can I do to protect my skin?", "What seems to be the best habit to protect my skin?"]
     youtube_processor = YouTubeProcessor()
     combined_data = youtube_processor.combine_multiple_queries(queries, num_sources_per_query=1, questions=questions)
