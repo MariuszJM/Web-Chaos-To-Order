@@ -17,7 +17,11 @@ class SourceProcessor(ABC):
     @abstractmethod
     def process_query(self, query: str, num_top_sources: int) -> DataStorage:
         pass
-        
+    
+    @abstractmethod
+    def fetch_content(self, identifier: str) -> str:
+        pass
+
     def add_summary_info(self, data_storage: DataStorage, questions: List[str]) -> DataStorage:
         for source in data_storage.data.keys():
             for title in data_storage.data[source].keys():

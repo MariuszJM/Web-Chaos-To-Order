@@ -1,6 +1,5 @@
 import os
 import datetime
-from typing import List
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
@@ -49,7 +48,7 @@ class YouTubeProcessor(SourceProcessor):
 
         top_data_storage = DataStorage()
         for score, source, title, url, video_id in top_videos:
-            transcript = self.get_transcript(video_id)
+            transcript = self.fetch_content(video_id)
             top_data_storage.add_data(source, title, url=url, details=transcript)
 
         return top_data_storage
@@ -73,7 +72,7 @@ class YouTubeProcessor(SourceProcessor):
             + (video_data["comment_count"] * 0.2)
         ) / days_since_published
 
-    def get_transcript(self, video_id):
+    def fetch_content(self, video_id):
         try:
             transcript = YouTubeTranscriptApi.get_transcript(video_id)
             transcript_text = " ".join([entry["text"] for entry in transcript])

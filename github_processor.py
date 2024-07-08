@@ -24,7 +24,7 @@ class GitHubProcessor(SourceProcessor):
         top_data_storage = DataStorage()
         for repo in repositories:
             repo_info = self.get_repo_info(repo)
-            readme_content = self.get_readme_content(repo["full_name"])
+            readme_content = self.fetch_content(repo["full_name"])
             repo_info["details"] = readme_content
             top_data_storage.add_data(self.platform_name, repo["full_name"], **repo_info)
 
@@ -56,7 +56,7 @@ class GitHubProcessor(SourceProcessor):
             "language": repo["language"],
         }
 
-    def get_readme_content(self, repo_full_name):
+    def fetch_content(self, repo_full_name):
         url = self.README_URL_TEMPLATE.format(repo_full_name=repo_full_name)
         headers = {
             "Authorization": f"token {GITHUB_TOKEN}"
