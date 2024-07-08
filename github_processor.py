@@ -71,30 +71,6 @@ class GitHubProcessor(SourceProcessor):
             print(f"Failed to fetch README for {repo_full_name}. Status code: {response.status_code}")
             return ""
 
-    def add_summary_info(self, data_storage: DataStorage, questions: List[str]) -> DataStorage:
-        for source in data_storage.data.keys():
-            for title in data_storage.data[source].keys():
-                content = data_storage.data[source][title].get("details") or self.get_readme_content(title)
-                if not content:
-                    continue
-
-                summary, combine_flag = self.llm_processor.summarize(content)
-
-                combined_summary = None
-                if combine_flag:
-                    combined_summary = self.llm_processor.organize_summarization_into_one(summary)
-                    
-                data_storage.data[source][title]["detailed_summary"] = summary
-                data_storage.data[source][title]["summary"] = combined_summary
-
-                for question in questions:
-                    answer = self.llm_processor.ask_llama_question(question, content, summary)
-                    if "Q&A" not in data_storage.data[source][title]:
-                        data_storage.data[source][title]["Q&A"] = {}
-                    data_storage.data[source][title]["Q&A"][question] = answer
-
-        return data_storage
-
 
 
 if __name__ == "__main__":

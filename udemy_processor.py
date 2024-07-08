@@ -99,34 +99,6 @@ class UdemyProcessor(SourceProcessor):
         print(f"Structured curriculum: {content}")  # Debugging output
         return content
 
-    def add_summary_info(self, data_storage: DataStorage, questions: List[str]) -> DataStorage:
-        for source in data_storage.data.keys():
-            for title in data_storage.data[source].keys():
-                details = data_storage.data[source][title]["details"]
-                details_str = "\n".join(
-                    [f"{chapter}: {', '.join(lectures)}" for chapter, lectures in details.items()]
-                )
-
-                if len(self.llm_processor.tokenize(details_str)) > 7500:
-                    summary, combine_flag = self.llm_processor.summarize(details_str)
-                    if combine_flag:
-                        combined_summary = self.llm_processor.organize_summarization_into_one(summary)
-                        data_storage.data[source][title]["summary"] = combined_summary
-                    data_storage.data[source][title]["detailed_summary"] = summary
-                    summary_source = summary
-                else:
-                    summary, _ = self.llm_processor.summarize(details_str)
-                    data_storage.data[source][title]["summary"] = summary
-                    summary_source = details_str
-
-                for question in questions:
-                    answer = self.llm_processor.ask_llama_question(question, details_str, summary_source)
-                    if "Q&A" not in data_storage.data[source][title]:
-                        data_storage.data[source][title]["Q&A"] = {}
-                    data_storage.data[source][title]["Q&A"][question] = answer
-
-        return data_storage
-
 
 if __name__ == "__main__":
     credentials = f"{UDEMY_CLIENT_ID}:{UDEMY_SECRET_KEY}"
