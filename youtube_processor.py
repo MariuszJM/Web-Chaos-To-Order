@@ -30,14 +30,6 @@ class YouTubeProcessor(SourceProcessor):
                 token.write(creds.to_json())
         return build("youtube", "v3", credentials=creds)
 
-    def combine_multiple_queries(self, queries: List[str], num_sources_per_query: int, questions: List[str]) -> DataStorage:
-        combined_storage = DataStorage()
-        for query in queries:
-            query_storage = self.process_query(query, num_sources_per_query)
-            combined_storage.combine(query_storage)
-        combined_storage = self.add_summary_info(combined_storage, questions)
-        return combined_storage
-
     def process_query(self, query: str, num_top_sources: int) -> DataStorage:
         response = self.youtube.search().list(q=query, part="snippet", maxResults=num_top_sources * 100, type="video").execute()
         scored_videos = []
