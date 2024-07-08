@@ -12,3 +12,4 @@ token.json
 *.yaml
 tmp.py
 courser.py
+main.py
