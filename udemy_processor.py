@@ -4,16 +4,16 @@ from typing import List, Dict
 from data_storage import DataStorage
 from base_processor import SourceProcessor
 from config import UDEMY_SECRET_KEY, UDEMY_CLIENT_ID
-from LLMProcessor import LLMProcessor
+
 
 class UdemyProcessor(SourceProcessor):
     BASE_URL = "https://www.udemy.com/api-2.0/courses/"
     COURSE_URL_PREFIX = "https://www.udemy.com"
 
-    def __init__(self, encoded_credentials, platform_name="Udemy"):
-        self.platform_name = platform_name
-        self.encoded_credentials = encoded_credentials
-        self.llm_processor = LLMProcessor()
+    def __init__(self, platform_name="Udemy"):
+        credentials = f"{UDEMY_CLIENT_ID}:{UDEMY_SECRET_KEY}"
+        self.encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
+        super().__init__(platform_name)
 
     def process_query(self, query: str, num_top_sources: int) -> DataStorage:
         response = self.search(query, num_top_sources)
@@ -101,12 +101,9 @@ class UdemyProcessor(SourceProcessor):
 
 
 if __name__ == "__main__":
-    credentials = f"{UDEMY_CLIENT_ID}:{UDEMY_SECRET_KEY}"
-    encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
-
     queries = ["machine learning"]
     questions = ["What is the best habit to follow every day?", "What are the prerequisites for this course?"]
-    udemy_processor = UdemyProcessor(encoded_credentials)
+    udemy_processor = UdemyProcessor()
     combined_data = udemy_processor.combine_multiple_queries(
         queries, num_sources_per_query=1, questions=questions
     )

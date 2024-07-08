@@ -1,10 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import List
 from data_storage import DataStorage
+from LLMProcessor import LLMProcessor
 
 
 class SourceProcessor(ABC):
-
+    def __init__(self, platform_name: str):
+        self.platform_name = platform_name
+        self.llm_processor = LLMProcessor()
     def combine_multiple_queries(
         self, queries: List[str], num_sources_per_query: int, questions: List[str]
     ) -> DataStorage:
@@ -12,7 +15,7 @@ class SourceProcessor(ABC):
         for query in queries:
             query_storage = self.process_query(query, num_sources_per_query)
             combined_storage.combine(query_storage)
-        combined_storage = self.add_summary_info(combined_storage, questions)
+        combined_storage = self.add_smart_tags(combined_storage, questions)
         return combined_storage
     @abstractmethod
     def process_query(self, query: str, num_top_sources: int) -> DataStorage:
@@ -22,7 +25,7 @@ class SourceProcessor(ABC):
     def fetch_content(self, identifier: str) -> str:
         pass
 
-    def add_summary_info(self, data_storage: DataStorage, questions: List[str]) -> DataStorage:
+    def add_smart_tags(self, data_storage: DataStorage, questions: List[str]) -> DataStorage:
         for source in data_storage.data.keys():
             for title in data_storage.data[source].keys():
                 content = data_storage.data[source][title].get("details")

@@ -6,7 +6,6 @@ from google.oauth2.credentials import Credentials
 from youtube_transcript_api import YouTubeTranscriptApi
 from data_storage import DataStorage
 from base_processor import SourceProcessor
-from LLMProcessor import LLMProcessor
 
 class YouTubeProcessor(SourceProcessor):
     SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
@@ -14,9 +13,8 @@ class YouTubeProcessor(SourceProcessor):
     CREDENTIALS_FILE = "credentials.json"
 
     def __init__(self, platform_name="YouTube"):
-        self.platform_name = platform_name
+        super().__init__(platform_name)
         self.youtube = self.authenticate_youtube()
-        self.llm_processor = LLMProcessor()
 
     def authenticate_youtube(self):
         creds = None

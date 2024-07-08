@@ -11,8 +11,7 @@ class GitHubProcessor(SourceProcessor):
     README_URL_TEMPLATE = "https://api.github.com/repos/{repo_full_name}/readme"
 
     def __init__(self, platform_name="GitHub"):
-        self.platform_name = platform_name
-        self.llm_processor = LLMProcessor()
+        super().__init__(platform_name)
 
     def process_query(self, query: str, num_top_sources: int) -> DataStorage:
         response = self.search(query, num_top_sources)
