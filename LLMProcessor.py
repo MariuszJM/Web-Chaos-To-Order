@@ -32,7 +32,7 @@ class LLMProcessor:
         combined_summary = "\n".join(summaries)
         
         if len(self.tokenize(combined_summary)) > 7500:
-            combined_summary, _ = self.summarize_content(combined_summary, chunk_size=7500)
+            combined_summary, _ = self.summarize(combined_summary, chunk_size=7500)
         
         return combined_summary, len(summaries) > 1
 
