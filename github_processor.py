@@ -5,11 +5,11 @@ from base_processor import SourceProcessor
 from config import GITHUB_TOKEN
 from datetime import datetime
 
-
 class GitHubProcessor(SourceProcessor):
     BASE_URL = "https://api.github.com/search/repositories"
     README_URL_TEMPLATE = "https://api.github.com/repos/{repo_full_name}/readme"
-    QUALITY_THRESHOLD = 0
+    STARS_THRESHOLD = 50
+    DAYS_THRESHOLD = 365
 
     def __init__(self, platform_name="GitHub"):
         super().__init__(platform_name)
@@ -19,7 +19,7 @@ class GitHubProcessor(SourceProcessor):
             "q": query,
             "sort": "stars",
             "order": "desc",
-            "per_page": limit,
+            "per_page": limit*5,
         }
         headers = {
             "Accept": "application/vnd.github.v3+json",
@@ -41,27 +41,15 @@ class GitHubProcessor(SourceProcessor):
             stars = source.get("stargazers_count", 0)
             updated_at = source.get("updated_at", "")
             days_since_update = self.calculate_days_since_update(updated_at)
-            quality = self.calculate_quality(stars, days_since_update)
-            
-            if quality >= self.QUALITY_THRESHOLD:
+            if stars >= self.STARS_THRESHOLD and days_since_update <= self.DAYS_THRESHOLD:
                 filtered_sources.append(source)
         
         return filtered_sources
-    
+
     def calculate_days_since_update(self, updated_at):
         updated_date = datetime.strptime(updated_at, "%Y-%m-%dT%H:%M:%SZ")
         days_since_update = (datetime.now() - updated_date).days
         return days_since_update
-
-    def calculate_quality(self, stars, days_since_update):
-        """
-        Calculate the quality of a repository based on stars and days since the last update.
-
-        Quality is calculated as the number of stars minus the weighted number of days since the last update.
-        With 30 stars and 30 days without an update, the quality will be 0, which is the set threshold.
-        """
-        quality = stars - days_since_update
-        return quality
 
     def select_top_sources(self, sources, num_top_sources):
         top_sources = sources[:num_top_sources]
