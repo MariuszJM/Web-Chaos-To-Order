@@ -8,6 +8,7 @@ class SourceProcessor(ABC):
     def __init__(self, platform_name: str):
         self.platform_name = platform_name
         self.llm_processor = LLMProcessor()
+
     def combine_multiple_queries(
         self, queries: List[str], num_sources_per_query: int, questions: List[str]
     ) -> DataStorage:
@@ -17,12 +18,27 @@ class SourceProcessor(ABC):
             combined_storage.combine(query_storage)
         combined_storage = self.add_smart_tags(combined_storage, questions)
         return combined_storage
-    @abstractmethod
+    
     def process_query(self, query: str, num_top_sources: int) -> DataStorage:
-        pass
+        sources = self.fetch_source_items(query, 2 * num_top_sources)
+        filtered_sources = self.filter_low_quality_sources(sources)
+        top_sources = self.select_top_sources(filtered_sources, num_top_sources)
+        return top_sources
     
     @abstractmethod
     def fetch_content(self, identifier: str) -> str:
+        pass
+
+    @abstractmethod
+    def fetch_source_items(self, query: str, limit: int) -> List[dict]:
+        pass
+
+    @abstractmethod
+    def filter_low_quality_sources(self, sources: List[dict]) -> List[dict]:
+        pass
+
+    @abstractmethod
+    def select_top_sources(self, sources: List[dict], num_top_sources: int) -> DataStorage:
         pass
 
     def add_smart_tags(self, data_storage: DataStorage, questions: List[str]) -> DataStorage:
@@ -51,4 +67,4 @@ class SourceProcessor(ABC):
                         data_storage.data[source][title]["Q&A"] = {}
                     data_storage.data[source][title]["Q&A"][question] = answer
 
-        return data_storage 
+        return data_storage

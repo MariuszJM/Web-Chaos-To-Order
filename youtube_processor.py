@@ -33,12 +33,6 @@ class YouTubeProcessor(SourceProcessor):
 
         return build("youtube", "v3", credentials=creds)
 
-    def process_query(self, query: str, num_top_sources: int) -> DataStorage:
-        sources = self.fetch_source_items(query, 2 * num_top_sources)
-        filtered_sources = self.filter_low_quality_sources(sources)
-        top_sources = self.select_top_sources(filtered_sources, num_top_sources)
-        return top_sources
-
     def fetch_source_items(self, query, max_results):
         response = self.youtube.search().list(q=query, part="snippet", maxResults=max_results, type="video").execute()
         return response["items"]
