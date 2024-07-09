@@ -1,5 +1,4 @@
 import os
-import datetime
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
@@ -8,11 +7,11 @@ from data_storage import DataStorage
 from base_processor import SourceProcessor
 from google.auth.transport.requests import Request
 
-
 class YouTubeProcessor(SourceProcessor):
     SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
     TOKEN_PATH = "token.json"
     CREDENTIALS_FILE = "credentials.json"
+    QUALITY_THRESHOLD = 0.2  # Example threshold for quality
 
     def __init__(self, platform_name="YouTube"):
         super().__init__(platform_name)
@@ -35,24 +34,34 @@ class YouTubeProcessor(SourceProcessor):
         return build("youtube", "v3", credentials=creds)
 
     def process_query(self, query: str, num_top_sources: int) -> DataStorage:
-        response = self.youtube.search().list(q=query, part="snippet", maxResults=num_top_sources * 100, type="video").execute()
-        scored_videos = []
+        sources = self.fetch_source_items(query, 2 * num_top_sources)
+        filtered_sources = self.filter_low_quality_sources(sources)
+        top_sources = self.select_top_sources(filtered_sources, num_top_sources)
+        return top_sources
 
-        for item in response["items"]:
+    def fetch_source_items(self, query, max_results):
+        response = self.youtube.search().list(q=query, part="snippet", maxResults=max_results, type="video").execute()
+        return response["items"]
+
+    def filter_low_quality_sources(self, sources):
+        filtered_sources = []
+        for item in sources:
             video_id = item["id"]["videoId"]
             snippet = item["snippet"]
             title = snippet["title"]
 
             video_details = self.get_video_details(video_id)
-            score = self.calculate_score(video_details)
-            url = f"https://www.youtube.com/watch?v={video_id}"
-            scored_videos.append((score, self.platform_name, title, url, video_id))
+            quality = self.calculate_quality(video_details)
+            if quality > self.QUALITY_THRESHOLD:
+                url = f"https://www.youtube.com/watch?v={video_id}"
+                filtered_sources.append((self.platform_name, title, url, video_id))
+        return filtered_sources
 
-        scored_videos.sort(reverse=True, key=lambda x: x[0])
-        top_videos = scored_videos[:num_top_sources]
+    def select_top_sources(self, sources, num_top_sources):
+        top_sources = sources[:num_top_sources]
 
         top_data_storage = DataStorage()
-        for score, source, title, url, video_id in top_videos:
+        for source, title, url, video_id in top_sources:
             transcript = self.fetch_content(video_id)
             top_data_storage.add_data(source, title, url=url, details=transcript)
 
@@ -60,22 +69,31 @@ class YouTubeProcessor(SourceProcessor):
 
     def get_video_details(self, video_id):
         response = self.youtube.videos().list(part="statistics,snippet", id=video_id).execute()["items"][0]
-        published_date = datetime.datetime.strptime(response["snippet"]["publishedAt"], "%Y-%m-%dT%H:%M:%SZ")
-        days_since_published = (datetime.datetime.now() - published_date).days
+        channel_id = response["snippet"]["channelId"]
+
+        # Fetch subscriber count
+        channel_response = self.youtube.channels().list(part="statistics", id=channel_id).execute()["items"][0]
+        subscriber_count = int(channel_response["statistics"].get("subscriberCount", 0))
+
         return {
             "view_count": int(response["statistics"].get("viewCount", 0)),
             "like_count": int(response["statistics"].get("likeCount", 0)),
             "comment_count": int(response["statistics"].get("commentCount", 0)),
-            "days_since_published": days_since_published,
+            "subscriber_count": subscriber_count,
         }
 
-    def calculate_score(self, video_data):
-        days_since_published = max(video_data["days_since_published"], 1)
-        return (
-            (video_data["view_count"] * 0.4)
-            + (video_data["like_count"] * 0.3)
-            + (video_data["comment_count"] * 0.2)
-        ) / days_since_published
+    def calculate_quality(self, video_data):
+        view_count = video_data["view_count"]
+        subscriber_count = video_data["subscriber_count"]
+        like_count = video_data["like_count"]
+        comment_count = video_data["comment_count"]
+
+        quality = (
+            ((view_count / subscriber_count) * 0.4)
+            + ((like_count / view_count) * 0.4)
+            + ((comment_count / view_count) * 0.2)
+        )
+        return quality
 
     def fetch_content(self, video_id):
         try:
@@ -84,7 +102,6 @@ class YouTubeProcessor(SourceProcessor):
         except Exception:
             transcript_text = "Transcript not available."
         return transcript_text
-
 
 if __name__ == "__main__":
     queries = ["fine tuning"]
