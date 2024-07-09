@@ -11,28 +11,12 @@ class GitHubProcessor(SourceProcessor):
     def __init__(self, platform_name="GitHub"):
         super().__init__(platform_name)
 
-    def process_query(self, query: str, num_top_sources: int) -> DataStorage:
-        response = self.search(query, num_top_sources)
-        if response is None:
-            return DataStorage()
-
-        repositories = response["items"][:num_top_sources]
-
-        top_data_storage = DataStorage()
-        for repo in repositories:
-            repo_info = self.get_repo_info(repo)
-            readme_content = self.fetch_content(repo["full_name"])
-            repo_info["details"] = readme_content
-            top_data_storage.add_data(self.platform_name, repo["full_name"], **repo_info)
-
-        return top_data_storage
-
-    def search(self, query: str, max_results):
+    def fetch_source_items(self, query, limit):
         params = {
             "q": query,
             "sort": "stars",
             "order": "desc",
-            "per_page": max_results,
+            "per_page": limit,
         }
         headers = {
             "Accept": "application/vnd.github.v3+json",
@@ -43,17 +27,27 @@ class GitHubProcessor(SourceProcessor):
 
         if response.status_code != 200:
             print(f"Failed to retrieve repositories: {response.status_code}")
-            return None
-        return response.json()
+            return []
 
-    def get_repo_info(self, repo):
-        return {
-            "url": repo["html_url"],
-            "description": repo["description"],
-            "language": repo["language"],
-        }
+        return response.json().get("items", [])
 
-    def fetch_content(self, repo_full_name):
+    def filter_low_quality_sources(self, sources):
+        # Example filter: only include repositories with more than 50 stars
+        return [source for source in sources if source.get("stargazers_count", 0) > 50]
+
+    def select_top_sources(self, sources, num_top_sources):
+        top_sources = sources[:num_top_sources]
+        top_data_storage = DataStorage()
+        
+        for repo in top_sources:
+            repo_info = self.get_repo_info(repo)
+            readme_content = self.fetch_content(repo["full_name"])
+            repo_info["details"] = readme_content
+            top_data_storage.add_data(self.platform_name, repo["full_name"], **repo_info)
+
+        return top_data_storage
+
+    def fetch_content(self, repo_full_name: str) -> str:
         url = self.README_URL_TEMPLATE.format(repo_full_name=repo_full_name)
         headers = {
             "Authorization": f"token {GITHUB_TOKEN}"
@@ -68,7 +62,12 @@ class GitHubProcessor(SourceProcessor):
             print(f"Failed to fetch README for {repo_full_name}. Status code: {response.status_code}")
             return ""
 
-
+    def get_repo_info(self, repo):
+        return {
+            "url": repo["html_url"],
+            "description": repo["description"],
+            "language": repo["language"],
+        }
 
 if __name__ == "__main__":
     queries = ["Open Web UI"]
