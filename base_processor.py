@@ -26,7 +26,7 @@ class SourceProcessor(ABC):
         return top_sources
     
     @abstractmethod
-    def fetch_content(self, identifier: str) -> str:
+    def fetch_detailed_content(self, identifier: str) -> str:
         pass
 
     @abstractmethod

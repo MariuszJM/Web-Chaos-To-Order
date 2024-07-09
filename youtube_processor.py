@@ -89,7 +89,7 @@ class YouTubeProcessor(SourceProcessor):
         )
         return quality
 
-    def fetch_content(self, video_id):
+    def fetch_detailed_content(self, video_id):
         try:
             transcript = YouTubeTranscriptApi.get_transcript(video_id)
             transcript_text = " ".join([entry["text"] for entry in transcript])

@@ -48,7 +48,7 @@ class UdemyProcessor(SourceProcessor):
 
         return top_data_storage
 
-    def fetch_content(self, course_id) -> Dict[str, List[str]]:
+    def fetch_detailed_content(self, course_id) -> Dict[str, List[str]]:
         items = []
         page = 1
         while True:

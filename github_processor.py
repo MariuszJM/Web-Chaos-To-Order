@@ -47,7 +47,7 @@ class GitHubProcessor(SourceProcessor):
 
         return top_data_storage
 
-    def fetch_content(self, repo_full_name: str) -> str:
+    def fetch_detailed_content(self, repo_full_name: str) -> str:
         url = self.README_URL_TEMPLATE.format(repo_full_name=repo_full_name)
         headers = {
             "Authorization": f"token {GITHUB_TOKEN}"
