@@ -4,10 +4,13 @@ from typing import List, Dict
 from data_storage import DataStorage
 from base_processor import SourceProcessor
 from config import UDEMY_SECRET_KEY, UDEMY_CLIENT_ID
+from datetime import datetime
 
 class UdemyProcessor(SourceProcessor):
     BASE_URL = "https://www.udemy.com/api-2.0/courses/"
     COURSE_URL_PREFIX = "https://www.udemy.com"
+    AVG_RATING_THRESHOLD = 4  
+    DAYS_THRESHOLD = 365
 
     def __init__(self, platform_name="Udemy"):
         credentials = f"{UDEMY_CLIENT_ID}:{UDEMY_SECRET_KEY}"
@@ -17,8 +20,9 @@ class UdemyProcessor(SourceProcessor):
     def fetch_source_items(self, query: str, limit: int) -> List[dict]:
         params = {
             "search": query,
-            "page_size": limit,
+            "page_size": limit*5,
             "ordering": "relevance",
+            'fields[course]': 'created,avg_rating,title,updated,num_subscribers,url'
         }
         headers = {
             "Authorization": f"Basic {self.encoded_credentials}",
@@ -34,8 +38,20 @@ class UdemyProcessor(SourceProcessor):
         return response.json().get("results", [])
 
     def filter_low_quality_sources(self, sources: List[dict]) -> List[dict]:
-        # Example filter: only include courses with more than 1000 students enrolled
-        return [source for source in sources if source.get("num_subscribers", 2) > 1]
+        filtered_sources = []
+        
+        for source in sources:
+            avg_rating = source.get("avg_rating", 0)
+            created = source.get("created", "")
+            days_since_creation = self.calculate_days_since_creation(created)
+            if days_since_creation <= self.DAYS_THRESHOLD and avg_rating >= self.AVG_RATING_THRESHOLD:
+                filtered_sources.append(source)
+        return filtered_sources
+
+    def calculate_days_since_creation(self, created: str) -> int:
+        created_date = datetime.strptime(created, "%Y-%m-%dT%H:%M:%SZ")
+        days_since_creation = (datetime.now() - created_date).days
+        return days_since_creation
 
     def select_top_sources(self, sources: List[dict], num_top_sources: int) -> DataStorage:
         top_sources = sources[:num_top_sources]
@@ -43,7 +59,7 @@ class UdemyProcessor(SourceProcessor):
         
         for course in top_sources:
             course_info = self.get_course_info(course)
-            course_info['details'] = self.fetch_content(course['id'])
+            course_info['details'] = self.fetch_detailed_content(course['id'])
             top_data_storage.add_data(self.platform_name, course["title"], **course_info)
 
         return top_data_storage
@@ -71,7 +87,6 @@ class UdemyProcessor(SourceProcessor):
             items.extend(page_items)
             page += 1
 
-        print(f"Curriculum items for course {course_id}: {items}")  # Debugging output
         content = self.structure_curriculum(items)
         return content
 
@@ -90,8 +105,6 @@ class UdemyProcessor(SourceProcessor):
                     if 'No Chapter' not in content:
                         content['No Chapter'] = []
                     content['No Chapter'].append(item['title'])
-
-        print(f"Structured curriculum: {content}")  # Debugging output
         return content
 
     def get_course_info(self, course):
