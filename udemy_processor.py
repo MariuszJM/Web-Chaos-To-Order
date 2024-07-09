@@ -5,7 +5,6 @@ from data_storage import DataStorage
 from base_processor import SourceProcessor
 from config import UDEMY_SECRET_KEY, UDEMY_CLIENT_ID
 
-
 class UdemyProcessor(SourceProcessor):
     BASE_URL = "https://www.udemy.com/api-2.0/courses/"
     COURSE_URL_PREFIX = "https://www.udemy.com"
@@ -15,25 +14,10 @@ class UdemyProcessor(SourceProcessor):
         self.encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
         super().__init__(platform_name)
 
-    def process_query(self, query: str, num_top_sources: int) -> DataStorage:
-        response = self.search(query, num_top_sources)
-        if response is None:
-            return DataStorage()
-
-        courses = response["results"][:num_top_sources]
-
-        top_data_storage = DataStorage()
-        for course in courses:
-            course_info = self.get_course_info(course)
-            course_info['details'] = self.fetch_content(course['id'])
-            top_data_storage.add_data(self.platform_name, course["title"], **course_info)
-
-        return top_data_storage
-
-    def search(self, query: str, max_results):
+    def fetch_source_items(self, query: str, limit: int) -> List[dict]:
         params = {
             "search": query,
-            "page_size": max_results,
+            "page_size": limit,
             "ordering": "relevance",
         }
         headers = {
@@ -45,13 +29,24 @@ class UdemyProcessor(SourceProcessor):
 
         if response.status_code != 200:
             print(f"Failed to retrieve courses: {response.status_code}")
-            return None
-        return response.json()
+            return []
 
-    def get_course_info(self, course):
-        return {
-            "url": self.COURSE_URL_PREFIX + course["url"],
-        }
+        return response.json().get("results", [])
+
+    def filter_low_quality_sources(self, sources: List[dict]) -> List[dict]:
+        # Example filter: only include courses with more than 1000 students enrolled
+        return [source for source in sources if source.get("num_subscribers", 2) > 1]
+
+    def select_top_sources(self, sources: List[dict], num_top_sources: int) -> DataStorage:
+        top_sources = sources[:num_top_sources]
+        top_data_storage = DataStorage()
+        
+        for course in top_sources:
+            course_info = self.get_course_info(course)
+            course_info['details'] = self.fetch_content(course['id'])
+            top_data_storage.add_data(self.platform_name, course["title"], **course_info)
+
+        return top_data_storage
 
     def fetch_content(self, course_id) -> Dict[str, List[str]]:
         items = []
@@ -99,6 +94,10 @@ class UdemyProcessor(SourceProcessor):
         print(f"Structured curriculum: {content}")  # Debugging output
         return content
 
+    def get_course_info(self, course):
+        return {
+            "url": self.COURSE_URL_PREFIX + course["url"],
+        }
 
 if __name__ == "__main__":
     queries = ["machine learning"]
