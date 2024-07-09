@@ -3,10 +3,13 @@ import base64
 from data_storage import DataStorage
 from base_processor import SourceProcessor
 from config import GITHUB_TOKEN
+from datetime import datetime
+
 
 class GitHubProcessor(SourceProcessor):
     BASE_URL = "https://api.github.com/search/repositories"
     README_URL_TEMPLATE = "https://api.github.com/repos/{repo_full_name}/readme"
+    QUALITY_THRESHOLD = 0
 
     def __init__(self, platform_name="GitHub"):
         super().__init__(platform_name)
@@ -32,8 +35,33 @@ class GitHubProcessor(SourceProcessor):
         return response.json().get("items", [])
 
     def filter_low_quality_sources(self, sources):
-        # Example filter: only include repositories with more than 50 stars
-        return [source for source in sources if source.get("stargazers_count", 0) > 50]
+        filtered_sources = []
+        
+        for source in sources:
+            stars = source.get("stargazers_count", 0)
+            updated_at = source.get("updated_at", "")
+            days_since_update = self.calculate_days_since_update(updated_at)
+            quality = self.calculate_quality(stars, days_since_update)
+            
+            if quality >= self.QUALITY_THRESHOLD:
+                filtered_sources.append(source)
+        
+        return filtered_sources
+    
+    def calculate_days_since_update(self, updated_at):
+        updated_date = datetime.strptime(updated_at, "%Y-%m-%dT%H:%M:%SZ")
+        days_since_update = (datetime.now() - updated_date).days
+        return days_since_update
+
+    def calculate_quality(self, stars, days_since_update):
+        """
+        Calculate the quality of a repository based on stars and days since the last update.
+
+        Quality is calculated as the number of stars minus the weighted number of days since the last update.
+        With 30 stars and 30 days without an update, the quality will be 0, which is the set threshold.
+        """
+        quality = stars - days_since_update
+        return quality
 
     def select_top_sources(self, sources, num_top_sources):
         top_sources = sources[:num_top_sources]
@@ -41,7 +69,7 @@ class GitHubProcessor(SourceProcessor):
         
         for repo in top_sources:
             repo_info = self.get_repo_info(repo)
-            readme_content = self.fetch_content(repo["full_name"])
+            readme_content = self.fetch_detailed_content(repo["full_name"])
             repo_info["details"] = readme_content
             top_data_storage.add_data(self.platform_name, repo["full_name"], **repo_info)
 
