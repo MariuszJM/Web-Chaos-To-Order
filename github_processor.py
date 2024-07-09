@@ -1,10 +1,8 @@
 import requests
 import base64
-from typing import List
 from data_storage import DataStorage
 from base_processor import SourceProcessor
 from config import GITHUB_TOKEN
-from LLMProcessor import LLMProcessor
 
 class GitHubProcessor(SourceProcessor):
     BASE_URL = "https://api.github.com/search/repositories"
