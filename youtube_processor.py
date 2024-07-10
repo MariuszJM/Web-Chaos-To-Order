@@ -56,7 +56,7 @@ class YouTubeProcessor(SourceProcessor):
 
         top_data_storage = DataStorage()
         for source, title, url, video_id in top_sources:
-            transcript = self.fetch_content(video_id)
+            transcript = self.fetch_detailed_content(video_id)
             top_data_storage.add_data(source, title, url=url, details=transcript)
 
         return top_data_storage
@@ -99,7 +99,7 @@ class YouTubeProcessor(SourceProcessor):
 
 if __name__ == "__main__":
     queries = ["fine tuning"]
-    questions = ['What is the best habit to follow every day?', "What Can I do to protect my skin?", "What seems to be the best habit to protect my skin?"]
+    questions = ['What is fine tuning?', "What are types of fine tuning?", "What are best practicies for fine tuning?"]
     youtube_processor = YouTubeProcessor()
     combined_data = youtube_processor.combine_multiple_queries(queries, num_sources_per_query=1, questions=questions)
     combined_data.save_to_yaml("youtube_data.yaml")
