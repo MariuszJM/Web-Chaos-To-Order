@@ -72,3 +72,12 @@ class LLMProcessor:
         response = ollama.generate(model=self.model_name, prompt=prompt)
         answer = response.get('response', "").strip()
         return answer
+    def score_q_and_a_relevance(self, question: str, answer: str):
+        prompt = f"""
+        Is the answer: {answer} provide some relevant information to the 
+        question: {question}?
+        Provide an answer as a yes or no answer.
+        """
+        response = ollama.generate(model=self.model_name, prompt=prompt)
+        answer = response.get('response', "").strip()
+        return 'yes' in answer.lower()
