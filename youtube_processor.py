@@ -11,7 +11,7 @@ class YouTubeProcessor(SourceProcessor):
     SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
     TOKEN_PATH = "token.json"
     CREDENTIALS_FILE = "credentials.json"
-    QUALITY_THRESHOLD = 0.2  # Example threshold for quality
+    QUALITY_THRESHOLD = 0.2
 
     def __init__(self, platform_name="YouTube"):
         super().__init__(platform_name)
@@ -64,8 +64,6 @@ class YouTubeProcessor(SourceProcessor):
     def get_video_details(self, video_id):
         response = self.youtube.videos().list(part="statistics,snippet", id=video_id).execute()["items"][0]
         channel_id = response["snippet"]["channelId"]
-
-        # Fetch subscriber count
         channel_response = self.youtube.channels().list(part="statistics", id=channel_id).execute()["items"][0]
         subscriber_count = int(channel_response["statistics"].get("subscriberCount", 0))
 
@@ -82,10 +80,22 @@ class YouTubeProcessor(SourceProcessor):
         like_count = video_data["like_count"]
         comment_count = video_data["comment_count"]
 
+        if subscriber_count == 0:
+            subscriber_ratio = 0
+        else:
+            subscriber_ratio = view_count / subscriber_count
+
+        if view_count == 0:
+            like_ratio = 0
+            comment_ratio = 0
+        else:
+            like_ratio = like_count / view_count
+            comment_ratio = comment_count / view_count
+
         quality = (
-            ((view_count / subscriber_count) * 0.4)
-            + ((like_count / view_count) * 0.4)
-            + ((comment_count / view_count) * 0.2)
+            (subscriber_ratio * 0.4)
+            + (like_ratio * 0.4)
+            + (comment_ratio * 0.2)
         )
         return quality
 
@@ -98,9 +108,9 @@ class YouTubeProcessor(SourceProcessor):
         return transcript_text
 
 if __name__ == "__main__":
-    queries = ["fine tuning"]
-    questions = ['What is fine tuning?', "What are types of fine tuning?", "What are best practicies for fine tuning?"]
+    queries = ["LLM output fomrat problems in python", 'constrain llm output format', 'How to solve problem of unstable output format from llm?']
+    questions = ['How to solve problem of unstable output format from llm?', "How to constrain the llm ouput format?", "How to solve the llm ouput format problem?"]
     youtube_processor = YouTubeProcessor()
-    combined_data = youtube_processor.combine_multiple_queries(queries, num_sources_per_query=1, questions=questions)
+    combined_data = youtube_processor.combine_multiple_queries(queries, num_sources_per_query=9, questions=questions)
     combined_data.save_to_yaml("youtube_data.yaml")
     print(combined_data.to_dict())
