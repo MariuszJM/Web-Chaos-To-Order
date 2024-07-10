@@ -72,12 +72,20 @@ class LLMProcessor:
         response = ollama.generate(model=self.model_name, prompt=prompt)
         answer = response.get('response', "").strip()
         return answer
+    
     def score_q_and_a_relevance(self, question: str, answer: str):
         prompt = f"""
-        Is the answer: {answer} provide some relevant information to the 
-        question: {question}?
-        Provide an answer as a yes or no answer.
+        Given the answer: "{answer}", does it provide a precise and specific response to the question: "{question}" without introducing unrelated details, general tips, or inferred information not explicitly stated in the text? 
+        Please provide a "yes" or "no" response.
         """
         response = ollama.generate(model=self.model_name, prompt=prompt)
         answer = response.get('response', "").strip()
         return 'yes' in answer.lower()
+
+    def validate_with_llm_knowledge(self, question: str, answer: str):
+        prompt = f"""
+        Given the answer: "{answer}" for the question: "{question}", based on your knowledge, is this answer truthful? Please provide a "yes" or "no" response.
+        """
+        response = ollama.generate(model=self.model_name, prompt=prompt)
+        answer = response.get('response', "").strip()
+        return not 'no' in answer.lower()
