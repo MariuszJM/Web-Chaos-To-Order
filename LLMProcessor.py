@@ -21,10 +21,7 @@ class LLMProcessor:
         summaries = []
         
         for chunk in chunks:
-            prompt = (
-                f"You are an expert content summarizer. Summarize the content based on the following text in up to 10 points with a newline between each point; "
-                f"Focus on essential information to understand the content and be able to use it effectively; Don't add any comments, just summary: {chunk}"
-            )
+            prompt = f"You are an expert content summarizer. Summarize the content based on the following text into concise paragraphs. Each paragraph should be separated by a newline and focus on a single key point. Don't add any comments, just the summary: {chunk}"
             response = ollama.generate(model=self.model_name, prompt=prompt)
             summary = response.get('response', "").strip()
             summaries.append(summary)
@@ -40,23 +37,10 @@ class LLMProcessor:
         return text.split()
 
     def organize_summarization_into_one(self, combined_text: str) -> str:
-        prompt = (f"""You are an expert content information organizer. Combine and organize the following summaries into a single cohesive summary. 
-                    Remove redundant informations.
-                    Make it as detailed as possible. The output shouldn't be much smaller than the input. You are not summarizer just organizer.
-                    Use bullet points and the following output format:
-                    
-                    **Overview**
-
-                    Overview content...
-
-                    **Summary Points**
-
-                    - First summary point content...
-                    - Second summary point content...
-                    - etc...
-
-                    Summaries: {combined_text}""")
-
+        prompt =f'''You are an expert content information organizer. Combine and organize the following summaries into a single cohesive summary. 
+        Each paragraph should be separated by a newline and focus on a single key point. Don't add any comments, just the summary Remove redundant informations. 
+        Make it as detailed as possible. The output shouldn't be much smaller than the input. You are not summarizer just organizer.
+        Summaries: {combined_text}''' 
         response = ollama.generate(model=self.model_name, prompt=prompt)
         organized_summary = response.get('response', "").strip()
         return organized_summary
