@@ -51,16 +51,13 @@ class GitHubProcessor(SourceProcessor):
         days_since_update = (datetime.now() - updated_date).days
         return days_since_update
 
-    def select_top_sources(self, sources, num_top_sources):
-        top_sources = sources[:num_top_sources]
+    def collect_source_details_to_data_storage(self, sources):
         top_data_storage = DataStorage()
-        
-        for repo in top_sources:
+        for repo in sources:
             repo_info = self.get_repo_info(repo)
             readme_content = self.fetch_detailed_content(repo["full_name"])
             repo_info["content"] = readme_content
             top_data_storage.add_data(self.platform_name, repo["full_name"], **repo_info)
-
         return top_data_storage
 
     def fetch_detailed_content(self, repo_full_name: str) -> str:

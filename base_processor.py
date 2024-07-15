@@ -25,7 +25,8 @@ class SourceProcessor(ABC):
         sources = self.fetch_source_items(query, 2 * num_top_sources)
         filtered_sources = self.filter_low_quality_sources(sources)
         top_sources = self.select_top_sources(filtered_sources, num_top_sources)
-        return top_sources
+        data_storage = self.collect_source_details_to_data_storage(top_sources)
+        return data_storage
     
     @abstractmethod
     def fetch_detailed_content(self, identifier: str) -> str:
@@ -36,12 +37,15 @@ class SourceProcessor(ABC):
         pass
 
     @abstractmethod
-    def filter_low_quality_sources(self, sources: List[dict]) -> List[dict]:
+    def collect_source_details_to_data_storage(self, sources: List[dict]) -> DataStorage:
         pass
 
     @abstractmethod
-    def select_top_sources(self, sources: List[dict], num_top_sources: int) -> DataStorage:
+    def filter_low_quality_sources(self, sources: List[dict]) -> List[dict]:
         pass
+
+    def select_top_sources(self, sources: List[dict], num_top_sources: int) -> List[dict]:
+        return sources[:num_top_sources]
 
     def add_smart_tags(self, data_storage: DataStorage, questions: List[str]) -> DataStorage:
         for source in data_storage.data.keys():

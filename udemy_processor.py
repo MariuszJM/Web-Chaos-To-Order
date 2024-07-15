@@ -53,15 +53,12 @@ class UdemyProcessor(SourceProcessor):
         days_since_creation = (datetime.now() - created_date).days
         return days_since_creation
 
-    def select_top_sources(self, sources: List[dict], num_top_sources: int) -> DataStorage:
-        top_sources = sources[:num_top_sources]
+    def collect_source_details_to_data_storage(self, sources):
         top_data_storage = DataStorage()
-        
-        for course in top_sources:
+        for course in sources:
             course_info = self.get_course_info(course)
             course_info["content"] = self.fetch_detailed_content(course['id'])
             top_data_storage.add_data(self.platform_name, course["title"], **course_info)
-
         return top_data_storage
 
     def fetch_detailed_content(self, course_id) -> Dict[str, List[str]]:

@@ -51,11 +51,9 @@ class YouTubeProcessor(SourceProcessor):
                 filtered_sources.append((self.platform_name, title, url, video_id))
         return filtered_sources
 
-    def select_top_sources(self, sources, num_top_sources):
-        top_sources = sources[:num_top_sources]
-
+    def collect_source_details_to_data_storage(self, sources):
         top_data_storage = DataStorage()
-        for source, title, url, video_id in top_sources:
+        for source, title, url, video_id in sources:
             transcript = self.fetch_detailed_content(video_id)
             top_data_storage.add_data(source, title, url=url, content=transcript)
 
