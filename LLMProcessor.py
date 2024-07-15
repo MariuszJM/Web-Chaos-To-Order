@@ -57,7 +57,7 @@ class LLMProcessor:
         answer = response.get('response', "").strip()
         return answer
     
-    def score_q_and_a_relevance(self, question: str, answer: str):
+    def validate_with_q_and_a_relevance(self, question: str, answer: str):
         prompt = f"""
         Given the answer: "{answer}", does it provide a precise and specific response to the question: "{question}" without introducing unrelated details, general tips, or inferred information not explicitly stated in the text? 
         Please provide a "yes" or "no" response.

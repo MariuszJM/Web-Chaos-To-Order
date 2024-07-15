@@ -72,7 +72,7 @@ class SourceProcessor(ABC):
                 relevance_score = 0
                 for question in questions:
                     answer = self.llm_processor.ask_llama_question(question, content, summary)
-                    if self.llm_processor.score_q_and_a_relevance(question, answer) and self.llm_processor.validate_with_llm_knowledge(question, answer):
+                    if self.llm_processor.validate_with_q_and_a_relevance(question, answer) and self.llm_processor.validate_with_llm_knowledge(question, answer):
                         if "Q&A" not in data_storage.data[source][title]:
                             data_storage.data[source][title]["Q&A"] = {}
                         data_storage.data[source][title]["Q&A"][question] = answer
