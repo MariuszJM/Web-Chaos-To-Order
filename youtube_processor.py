@@ -57,7 +57,7 @@ class YouTubeProcessor(SourceProcessor):
         top_data_storage = DataStorage()
         for source, title, url, video_id in top_sources:
             transcript = self.fetch_detailed_content(video_id)
-            top_data_storage.add_data(source, title, url=url, details=transcript)
+            top_data_storage.add_data(source, title, url=url, content=transcript)
 
         return top_data_storage
 

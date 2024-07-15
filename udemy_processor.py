@@ -59,7 +59,7 @@ class UdemyProcessor(SourceProcessor):
         
         for course in top_sources:
             course_info = self.get_course_info(course)
-            course_info['details'] = self.fetch_detailed_content(course['id'])
+            course_info["content"] = self.fetch_detailed_content(course['id'])
             top_data_storage.add_data(self.platform_name, course["title"], **course_info)
 
         return top_data_storage

@@ -46,7 +46,7 @@ class SourceProcessor(ABC):
     def add_smart_tags(self, data_storage: DataStorage, questions: List[str]) -> DataStorage:
         for source in data_storage.data.keys():
             for title in data_storage.data[source].keys():
-                content = data_storage.data[source][title].get("details")
+                content = data_storage.data[source][title].get("content")
                 if not content:
                     continue
                 
