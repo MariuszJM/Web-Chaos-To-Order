@@ -3,7 +3,6 @@ from typing import List
 from data_storage import DataStorage
 from LLMProcessor import LLMProcessor
 
-
 class SourceProcessor(ABC):
     def __init__(self, platform_name: str):
         self.platform_name = platform_name
@@ -31,23 +30,23 @@ class SourceProcessor(ABC):
         return data_storage
     
     @abstractmethod
-    def fetch_detailed_content(self, identifier: str) -> str:
-        pass
-
-    @abstractmethod
     def fetch_source_items(self, query: str, limit: int) -> List[dict]:
         pass
-
+    
+    @abstractmethod
+    def filter_low_quality_sources(self, sources: List[dict]) -> List[dict]:
+        pass
+    
+    def select_top_sources(self, sources: List[dict], num_top_sources: int) -> List[dict]:
+        return sources[:num_top_sources]
+    
     @abstractmethod
     def collect_source_details_to_data_storage(self, sources: List[dict]) -> DataStorage:
         pass
 
     @abstractmethod
-    def filter_low_quality_sources(self, sources: List[dict]) -> List[dict]:
+    def fetch_detailed_content(self, identifier: str) -> str:
         pass
-
-    def select_top_sources(self, sources: List[dict], num_top_sources: int) -> List[dict]:
-        return sources[:num_top_sources]
 
     def add_smart_tags(self, data_storage: DataStorage, questions: List[str]) -> DataStorage:
         for platform_name in data_storage.data.keys():
