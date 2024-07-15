@@ -33,8 +33,8 @@ class YouTubeProcessor(SourceProcessor):
 
         return build("youtube", "v3", credentials=creds)
 
-    def fetch_source_items(self, query, max_results):
-        response = self.youtube.search().list(q=query, part="snippet", maxResults=max_results, type="video").execute()
+    def fetch_source_items(self, query, limit):
+        response = self.youtube.search().list(q=query, part="snippet", maxResults=limit, type="video").execute()
         return response["items"]
 
     def filter_low_quality_sources(self, sources):
@@ -109,6 +109,6 @@ if __name__ == "__main__":
     queries = ["LLM output fomrat problems in python", 'constrain llm output format', 'How to solve problem of unstable output format from llm?']
     questions = ['How to solve problem of unstable output format from llm?', "How to constrain the llm ouput format?", "How to solve the llm ouput format problem?"]
     youtube_processor = YouTubeProcessor()
-    combined_data = youtube_processor.combine_multiple_queries(queries, num_sources_per_query=9, questions=questions)
+    combined_data = youtube_processor.process(queries, num_sources_per_query=9, questions=questions)
     combined_data.save_to_yaml("youtube_data.yaml")
     print(combined_data.to_dict())

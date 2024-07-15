@@ -9,16 +9,18 @@ class SourceProcessor(ABC):
         self.platform_name = platform_name
         self.llm_processor = LLMProcessor()
 
-    def combine_multiple_queries(
-        self, queries: List[str], num_sources_per_query: int, questions: List[str]
-    ) -> DataStorage:
+    def process(self, queries: List[str], num_sources_per_query: int, questions: List[str]) -> DataStorage:
+        combined_data = self.combine_multiple_queries(queries, num_sources_per_query)
+        tagged_data = self.add_smart_tags(combined_data, questions)
+        filtered_data = self.filter_relevant_sources(tagged_data)
+        sorted_data = self.rank_sources_by_relevance(filtered_data)
+        return sorted_data
+    
+    def combine_multiple_queries(self, queries: List[str], num_sources_per_query: int) -> DataStorage:
         combined_storage = DataStorage()
         for query in queries:
             query_storage = self.process_query(query, num_sources_per_query)
             combined_storage.combine(query_storage)
-        combined_storage = self.add_smart_tags(combined_storage, questions)
-        combined_storage = self.filter_by_relevance(combined_storage)
-        combined_storage = self.sort_sources_by_relevance(combined_storage)
         return combined_storage
     
     def process_query(self, query: str, num_top_sources: int) -> DataStorage:
@@ -79,7 +81,7 @@ class SourceProcessor(ABC):
                 data_storage.data[source][title]["relevance_score"] = relevance_score
         return data_storage
 
-    def filter_by_relevance(self, data_storage: DataStorage) -> DataStorage:
+    def filter_relevant_sources(self, data_storage: DataStorage) -> DataStorage:
         filtered_data = {}
         for source, titles in data_storage.data.items():
             filtered_titles = {title: info for title, info in titles.items() if info.get("relevance_score", 0) > 0}
@@ -88,7 +90,7 @@ class SourceProcessor(ABC):
         data_storage.data = filtered_data
         return data_storage
 
-    def sort_sources_by_relevance(self, data_storage: DataStorage) -> DataStorage:
+    def rank_sources_by_relevance(self, data_storage: DataStorage) -> DataStorage:
         sorted_data = {}
         for source, titles in data_storage.data.items():
             # Sort titles by relevance_score

@@ -86,6 +86,6 @@ if __name__ == "__main__":
     queries = ["Open Web UI"]
     questions = ["Does the project support Docker?", "Is there a contribution guide?"]
     github_processor = GitHubProcessor()
-    combined_data = github_processor.combine_multiple_queries(queries, num_sources_per_query=5, questions=questions)
+    combined_data = github_processor.process(queries, num_sources_per_query=5, questions=questions)
     combined_data.save_to_yaml("github_repositories.yaml")
     print(combined_data.to_dict())
