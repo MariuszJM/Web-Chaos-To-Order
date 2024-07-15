@@ -50,9 +50,9 @@ class SourceProcessor(ABC):
         return sources[:num_top_sources]
 
     def add_smart_tags(self, data_storage: DataStorage, questions: List[str]) -> DataStorage:
-        for source in data_storage.data.keys():
-            for title in data_storage.data[source].keys():
-                content = data_storage.data[source][title].get("content")
+        for platform_name in data_storage.data.keys():
+            for title in data_storage.data[platform_name].keys():
+                content = data_storage.data[platform_name][title].get("content")
                 if not content:
                     continue
                 
@@ -63,38 +63,38 @@ class SourceProcessor(ABC):
 
                 if combine_flag:
                     combined_summary = self.llm_processor.organize_summarization_into_one(summary)
-                    data_storage.data[source][title]["detailed_summary"] = summary
-                    data_storage.data[source][title]["summary"] = combined_summary
+                    data_storage.data[platform_name][title]["detailed_summary"] = summary
+                    data_storage.data[platform_name][title]["summary"] = combined_summary
                 else:
-                    data_storage.data[source][title]["summary"] = summary
+                    data_storage.data[platform_name][title]["summary"] = summary
 
                 relevance_score = 0
                 for question in questions:
                     answer = self.llm_processor.ask_llama_question(question, content, summary)
                     if self.llm_processor.validate_with_q_and_a_relevance(question, answer) and self.llm_processor.validate_with_llm_knowledge(question, answer):
-                        if "Q&A" not in data_storage.data[source][title]:
-                            data_storage.data[source][title]["Q&A"] = {}
-                        data_storage.data[source][title]["Q&A"][question] = answer
+                        if "Q&A" not in data_storage.data[platform_name][title]:
+                            data_storage.data[platform_name][title]["Q&A"] = {}
+                        data_storage.data[platform_name][title]["Q&A"][question] = answer
                         relevance_score += 1
                 
-                data_storage.data[source][title]["relevance_score"] = relevance_score
+                data_storage.data[platform_name][title]["relevance_score"] = relevance_score
         return data_storage
 
     def filter_relevant_sources(self, data_storage: DataStorage) -> DataStorage:
         filtered_data = {}
-        for source, titles in data_storage.data.items():
+        for platform_name, titles in data_storage.data.items():
             filtered_titles = {title: info for title, info in titles.items() if info.get("relevance_score", 0) > 0}
             if filtered_titles:
-                filtered_data[source] = filtered_titles
+                filtered_data[platform_name] = filtered_titles
         data_storage.data = filtered_data
         return data_storage
 
     def rank_sources_by_relevance(self, data_storage: DataStorage) -> DataStorage:
         sorted_data = {}
-        for source, titles in data_storage.data.items():
+        for platform_name, titles in data_storage.data.items():
             sorted_titles = dict(sorted(titles.items(), key=lambda item: item[1].get("relevance_score", 0), reverse=True))
             for title in sorted_titles:
                 sorted_titles[title].pop("relevance_score", None)
-            sorted_data[source] = sorted_titles
+            sorted_data[platform_name] = sorted_titles
         data_storage.data = sorted_data
         return data_storage
