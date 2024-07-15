@@ -56,7 +56,6 @@ class SourceProcessor(ABC):
                 if not content:
                     continue
                 
-                # If content is a dict, convert it to a string representation
                 if isinstance(content, dict):
                     content = "\n".join([f"{chapter}: {', '.join(lectures)}" for chapter, lectures in content.items()])
 
@@ -93,9 +92,7 @@ class SourceProcessor(ABC):
     def rank_sources_by_relevance(self, data_storage: DataStorage) -> DataStorage:
         sorted_data = {}
         for source, titles in data_storage.data.items():
-            # Sort titles by relevance_score
             sorted_titles = dict(sorted(titles.items(), key=lambda item: item[1].get("relevance_score", 0), reverse=True))
-            # Remove relevance_score from each title's information
             for title in sorted_titles:
                 sorted_titles[title].pop("relevance_score", None)
             sorted_data[source] = sorted_titles
