@@ -7,13 +7,14 @@ from src.utils import load_config, create_output_directory
 
 
 if __name__ == "__main__":
-    config = load_config('./config/config.yaml')
+    execution_config = load_config('./config/execution_config.yaml')
+    sources_per_query = execution_config['sources_per_query']
 
-    queries = config['search_phrases']
-    platforms = [platform.lower() for platform in config['platforms']]
-    sources_per_query = config['sources_per_query']
-    max_outputs_per_platform = config['max_outputs_per_platform']
-    specific_questions = config['specific_questions']
+    user_config = load_config('./config/user_config.yaml')
+    queries = user_config['search_phrases']
+    platforms = [platform.lower() for platform in user_config['platforms']]
+    max_outputs_per_platform = user_config['max_outputs_per_platform']
+    specific_questions = user_config['specific_questions']
 
     combined_data = DataStorage()
 
