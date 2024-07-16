@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import List
-from data_storage import DataStorage
-from LLMProcessor import LLMProcessor
+from src.data_storage import DataStorage
+from src.llm import LLM
 
 class SourceProcessor(ABC):
     def __init__(self, platform_name: str):
         self.platform_name = platform_name
-        self.llm_processor = LLMProcessor()
+        self.llm = LLM()
 
     def process(self, queries: List[str], num_sources_per_query: int, questions: List[str]) -> DataStorage:
         combined_data = self.combine_multiple_queries(queries, num_sources_per_query)
@@ -58,10 +58,10 @@ class SourceProcessor(ABC):
                 if isinstance(content, dict):
                     content = "\n".join([f"{chapter}: {', '.join(lectures)}" for chapter, lectures in content.items()])
 
-                summary, combine_flag = self.llm_processor.summarize(content)
+                summary, combine_flag = self.llm.summarize(content)
 
                 if combine_flag:
-                    combined_summary = self.llm_processor.organize_summarization_into_one(summary)
+                    combined_summary = self.llm.organize_summarization_into_one(summary)
                     data_storage.data[platform_name][title]["detailed_summary"] = summary
                     data_storage.data[platform_name][title]["summary"] = combined_summary
                 else:
@@ -69,8 +69,8 @@ class SourceProcessor(ABC):
 
                 relevance_score = 0
                 for question in questions:
-                    answer = self.llm_processor.ask_llama_question(question, content, summary)
-                    if self.llm_processor.validate_with_q_and_a_relevance(question, answer) and self.llm_processor.validate_with_llm_knowledge(question, answer):
+                    answer = self.llm.ask_llama_question(question, content, summary)
+                    if self.llm.validate_with_q_and_a_relevance(question, answer) and self.llm.validate_with_llm_knowledge(question, answer):
                         if "Q&A" not in data_storage.data[platform_name][title]:
                             data_storage.data[platform_name][title]["Q&A"] = {}
                         data_storage.data[platform_name][title]["Q&A"][question] = answer

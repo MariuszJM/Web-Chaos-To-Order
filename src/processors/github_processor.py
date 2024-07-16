@@ -1,7 +1,7 @@
 import requests
 import base64
-from data_storage import DataStorage
-from base_processor import SourceProcessor
+from src.data_storage import DataStorage
+from src.processors.base_processor import SourceProcessor
 from config import GITHUB_TOKEN
 from datetime import datetime
 

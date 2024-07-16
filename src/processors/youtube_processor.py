@@ -3,13 +3,13 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from youtube_transcript_api import YouTubeTranscriptApi
-from data_storage import DataStorage
-from base_processor import SourceProcessor
+from src.data_storage import DataStorage
+from src.processors.base_processor import SourceProcessor
 from google.auth.transport.requests import Request
 
 class YouTubeProcessor(SourceProcessor):
     SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
-    TOKEN_PATH = "token.json"
+    TOKEN_PATH = "../token.json"
     CREDENTIALS_FILE = "credentials.json"
     QUALITY_THRESHOLD = 0.2
 

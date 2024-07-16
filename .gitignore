@@ -2,7 +2,7 @@
 *.pyc
 
 # Ignore cache directories
-__pycache__/
+**/__pycache__/
 
 # Ignore configuration files and credentials
 config.py

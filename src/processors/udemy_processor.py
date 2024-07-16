@@ -1,8 +1,8 @@
 import base64
 import requests
 from typing import List, Dict
-from data_storage import DataStorage
-from base_processor import SourceProcessor
+from src.data_storage import DataStorage
+from src.processors.base_processor import SourceProcessor
 from config import UDEMY_SECRET_KEY, UDEMY_CLIENT_ID
 from datetime import datetime
 

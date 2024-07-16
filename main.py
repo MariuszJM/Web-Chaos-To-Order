@@ -1,13 +1,13 @@
-from github_processor import GitHubProcessor
-from udemy_processor import UdemyProcessor
-from youtube_processor import YouTubeProcessor
-from data_storage import DataStorage
+from src.processors.github_processor import GitHubProcessor
+from src.processors.udemy_processor import UdemyProcessor
+from src.processors.youtube_processor import YouTubeProcessor
+from src.data_storage import DataStorage
 
 
 if __name__ == "__main__":
-    queries = ["machine learning"]
-    questions = ["What is the best habit to follow every day?", "What are the prerequisites for this course?"]
-
+    queries = ["fine tuning"]
+    questions = ['What is fine tuning?']
+    num_sources_per_query = 1
     combined_data = DataStorage()
 
     # Udemy

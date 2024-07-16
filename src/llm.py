@@ -2,7 +2,7 @@ import ollama
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from typing import List
 
-class LLMProcessor:
+class LLM:
     def __init__(self, model_name="llama3:instruct"):
         self.model_name = model_name
 
