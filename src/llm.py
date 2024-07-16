@@ -73,3 +73,18 @@ class LLM:
         response = ollama.generate(model=self.model_name, prompt=prompt)
         answer = response.get('response', "").strip()
         return not 'no' in answer.lower()
+    
+    def provide_run_name(self, queries, questions):
+        prompt = f"""
+        Create a short name (up to 24 characters) based on the following queries and questions, provide only the answer without any additional text:
+        
+        Queries:
+        {", ".join(queries)}
+        
+        Questions:
+        {", ".join(questions)}
+        Aim is to provide short name to as precisely possible describe the search, which make the best sense  
+        """
+        response = ollama.generate(model=self.model_name, prompt=prompt)
+        answer = response.get('response', "").strip()
+        return answer.replace(" ", "_")
