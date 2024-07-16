@@ -20,7 +20,7 @@ class UdemyProcessor(SourceProcessor):
     def fetch_source_items(self, query: str, limit: int) -> List[dict]:
         params = {
             "search": query,
-            "page_size": limit*5,
+            "page_size": limit,
             "ordering": "relevance",
             'fields[course]': 'created,avg_rating,title,updated,num_subscribers,url'
         }

@@ -19,7 +19,7 @@ class GitHubProcessor(SourceProcessor):
             "q": query,
             "sort": "stars",
             "order": "desc",
-            "per_page": limit*5,
+            "per_page": limit,
         }
         headers = {
             "Accept": "application/vnd.github.v3+json",
