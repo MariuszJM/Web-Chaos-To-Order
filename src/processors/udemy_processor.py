@@ -114,7 +114,7 @@ if __name__ == "__main__":
     questions = ["What is the best habit to follow every day?", "What are the prerequisites for this course?"]
     udemy_processor = UdemyProcessor()
     combined_data = udemy_processor.process(
-        queries, num_sources_per_query=1, questions=questions
+        queries, sources_per_query=1, questions=questions
     )
     combined_data.save_to_yaml("udemy_courses.yaml")
     print(combined_data.to_dict())

@@ -109,6 +109,6 @@ if __name__ == "__main__":
     queries = ["LLM output fomrat problems in python", 'constrain llm output format', 'How to solve problem of unstable output format from llm?']
     questions = ['How to solve problem of unstable output format from llm?', "How to constrain the llm ouput format?", "How to solve the llm ouput format problem?"]
     youtube_processor = YouTubeProcessor()
-    combined_data = youtube_processor.process(queries, num_sources_per_query=9, questions=questions)
+    combined_data = youtube_processor.process(queries, sources_per_query=9, questions=questions)
     combined_data.save_to_yaml("youtube_data.yaml")
     print(combined_data.to_dict())

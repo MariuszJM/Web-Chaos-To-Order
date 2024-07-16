@@ -6,7 +6,7 @@ from src.utils import load_config
 
 
 if __name__ == "__main__":
-    config = load_config('config.yaml')
+    config = load_config('./config/config.yaml')
 
     queries = config['search_phrases']
     platforms = [platform.lower() for platform in config['platforms']]
@@ -20,7 +20,7 @@ if __name__ == "__main__":
         platforms.remove('udemy')
         udemy_processor = UdemyProcessor()
         udemy_combined_data = udemy_processor.process(
-            queries, num_sources_per_query=sources_per_query, questions=specific_questions
+            queries, sources_per_query=sources_per_query, questions=specific_questions
         )
         combined_data.combine(udemy_combined_data)
 
@@ -28,7 +28,7 @@ if __name__ == "__main__":
         platforms.remove('youtube')
         youtube_processor = YouTubeProcessor()
         youtube_combined_data = youtube_processor.process(
-            queries, num_sources_per_query=sources_per_query, questions=specific_questions
+            queries, sources_per_query=sources_per_query, questions=specific_questions
         )
         combined_data.combine(youtube_combined_data)
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
         platforms.remove('github')
         github_processor = GitHubProcessor()
         github_combined_data = github_processor.process(
-            queries, num_sources_per_query=sources_per_query, questions=specific_questions
+            queries, sources_per_query=sources_per_query, questions=specific_questions
         )
         combined_data.combine(github_combined_data)
     

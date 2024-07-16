@@ -8,17 +8,17 @@ class SourceProcessor(ABC):
         self.platform_name = platform_name
         self.llm = LLM()
 
-    def process(self, queries: List[str], num_sources_per_query: int, questions: List[str]) -> DataStorage:
-        combined_data = self.combine_multiple_queries(queries, num_sources_per_query)
+    def process(self, queries: List[str], sources_per_query: int, questions: List[str]) -> DataStorage:
+        combined_data = self.combine_multiple_queries(queries, sources_per_query)
         tagged_data = self.add_smart_tags(combined_data, questions)
         filtered_data = self.filter_relevant_sources(tagged_data)
         sorted_data = self.rank_sources_by_relevance(filtered_data)
         return sorted_data
     
-    def combine_multiple_queries(self, queries: List[str], num_sources_per_query: int) -> DataStorage:
+    def combine_multiple_queries(self, queries: List[str], sources_per_query: int) -> DataStorage:
         combined_storage = DataStorage()
         for query in queries:
-            query_storage = self.process_query(query, num_sources_per_query)
+            query_storage = self.process_query(query, sources_per_query)
             combined_storage.combine(query_storage)
         return combined_storage
     
