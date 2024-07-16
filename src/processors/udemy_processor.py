@@ -3,7 +3,7 @@ import requests
 from typing import List, Dict
 from src.data_storage import DataStorage
 from src.processors.base_processor import SourceProcessor
-from config import UDEMY_SECRET_KEY, UDEMY_CLIENT_ID
+from credentials.credentials import UDEMY_SECRET_KEY, UDEMY_CLIENT_ID
 from datetime import datetime
 
 class UdemyProcessor(SourceProcessor):

@@ -9,8 +9,8 @@ from google.auth.transport.requests import Request
 
 class YouTubeProcessor(SourceProcessor):
     SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
-    TOKEN_PATH = "../token.json"
-    CREDENTIALS_FILE = "credentials.json"
+    TOKEN_PATH = "./credentials/token.json"
+    CREDENTIALS_FILE = "./credentials/credentials.json"
     QUALITY_THRESHOLD = 0.2
 
     def __init__(self, platform_name="YouTube"):

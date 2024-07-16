@@ -2,7 +2,7 @@ import requests
 import base64
 from src.data_storage import DataStorage
 from src.processors.base_processor import SourceProcessor
-from config import GITHUB_TOKEN
+from credentials.credentials import GITHUB_TOKEN
 from datetime import datetime
 
 class GitHubProcessor(SourceProcessor):
