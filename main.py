@@ -1,8 +1,9 @@
+import os
 from src.processors.github_processor import GitHubProcessor
 from src.processors.udemy_processor import UdemyProcessor
 from src.processors.youtube_processor import YouTubeProcessor
 from src.data_storage import DataStorage
-from src.utils import load_config
+from src.utils import load_config, create_output_directory
 
 
 if __name__ == "__main__":
@@ -43,5 +44,7 @@ if __name__ == "__main__":
     if len(platforms) != 0: 
         print(f"Platrofms: {platforms} are not available")
 
-    combined_data.save_to_yaml("combined_data.yaml")
+    output_dir = create_output_directory('runs')
+    combined_data.save_to_yaml(os.path.join(output_dir, "combined_data.yaml"))
     print("Combined Data:", combined_data.to_dict())
+    print(f"Data saved to: {output_dir}")
