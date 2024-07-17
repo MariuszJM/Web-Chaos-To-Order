@@ -62,7 +62,7 @@ class SourceProcessor(ABC):
                 if isinstance(content, dict):
                     content = "\n".join([f"{chapter}: {', '.join(lectures)}" for chapter, lectures in content.items()])
 
-                summary, combine_flag = self.llm.summarize(content)
+                summary, combine_flag = self.llm.summarize(content=content, questions=questions)
 
                 if combine_flag:
                     combined_summary = self.llm.organize_summarization_into_one(summary)

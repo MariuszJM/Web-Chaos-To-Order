@@ -13,15 +13,15 @@ class LLM:
         )
         return text_splitter.split_text(text)
 
-    def summarize(self, content: str, chunk_size=7500) -> str:
+    def summarize(self, content: str, chunk_size=7500, questions=[]) -> str:
         if not content:
             return "Content not available."
 
         chunks = self.split_text_to_chunks(content, chunk_size=chunk_size)
         summaries = []
-        
+        prompt_base = f"You are an expert content summarizer. Summarize the content based on the following text into concise paragraphs. Each paragraph should be separated by a newline and focus on a single key point. Don't add any comments, just the summary. Prioritize the informations which can help answer the questions: {questions}:"
         for chunk in chunks:
-            prompt = f"You are an expert content summarizer. Summarize the content based on the following text into concise paragraphs. Each paragraph should be separated by a newline and focus on a single key point. Don't add any comments, just the summary: {chunk}"
+            prompt = prompt_base + chunk
             response = ollama.generate(model=self.model_name, prompt=prompt)
             summary = response.get('response', "").strip()
             summaries.append(summary)
