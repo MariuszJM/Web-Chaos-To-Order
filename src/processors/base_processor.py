@@ -4,7 +4,6 @@ from src.data_storage import DataStorage
 from src.llm import LLM
 
 class SourceProcessor(ABC):
-    MIN_NUM_OF_QUESTIONS_TO_TRIGGER_SMART_FILTERING = 3
     def __init__(self, platform_name: str):
         self.platform_name = platform_name
         self.llm = LLM()
@@ -13,8 +12,7 @@ class SourceProcessor(ABC):
         combined_data = self.combine_multiple_queries(queries, sources_per_query, time_horizon)
         data_with_content, data_witout_content = self.check_source_content(combined_data)
         tagged_data = self.add_smart_tags(data_with_content, questions)
-        if len(questions) > self.MIN_NUM_OF_QUESTIONS_TO_TRIGGER_SMART_FILTERING:
-            tagged_data = self.filter_relevant_sources(tagged_data)
+        tagged_data = self.filter_relevant_sources(tagged_data)
         tagged_data = self.rank_sources_by_relevance(tagged_data)
         top_data, rejected_data = self.choose_top_sources(tagged_data, max_outputs_per_platform)
         return top_data, data_witout_content, rejected_data
