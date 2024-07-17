@@ -6,6 +6,8 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from src.data_storage import DataStorage
 from src.processors.base_processor import SourceProcessor
 from google.auth.transport.requests import Request
+from datetime import datetime
+
 
 class YouTubeProcessor(SourceProcessor):
     SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
@@ -37,20 +39,26 @@ class YouTubeProcessor(SourceProcessor):
         response = self.youtube.search().list(q=query, part="snippet", maxResults=limit, type="video").execute()
         return response["items"]
 
-    def filter_low_quality_sources(self, sources):
+    def filter_low_quality_sources(self, sources, time_horizon):
         filtered_sources = []
         for item in sources:
             video_id = item["id"]["videoId"]
             snippet = item["snippet"]
             title = snippet["title"]
-
+            published_at = snippet["publishedAt"]
+            days_since_creation = self.calculate_days_passed(published_at)
             video_details = self.get_video_details(video_id)
             quality = self.calculate_quality(video_details)
-            if quality > self.QUALITY_THRESHOLD:
+            if quality > self.QUALITY_THRESHOLD and days_since_creation <= time_horizon:
                 url = f"https://www.youtube.com/watch?v={video_id}"
                 filtered_sources.append((self.platform_name, title, url, video_id))
         return filtered_sources
 
+    def calculate_days_passed(self, date: str) -> int:
+        created_date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ")
+        days_since_creation = (datetime.now() - created_date).days
+        return days_since_creation
+    
     def collect_source_details_to_data_storage(self, sources):
         top_data_storage = DataStorage()
         for source, title, url, video_id in sources:

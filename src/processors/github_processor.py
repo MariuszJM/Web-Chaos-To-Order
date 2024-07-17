@@ -34,21 +34,21 @@ class GitHubProcessor(SourceProcessor):
 
         return response.json().get("items", [])
 
-    def filter_low_quality_sources(self, sources):
+    def filter_low_quality_sources(self, sources, time_horizon):
         filtered_sources = []
         
         for source in sources:
             stars = source.get("stargazers_count", 0)
             updated_at = source.get("updated_at", "")
             created_at = source.get("created_at", "")
-            days_since_update = self.calculateDaysPassed(updated_at)
-            # days_since_creation = self.calculateDaysPassed(created_at)
-            if stars >= self.STARS_THRESHOLD and days_since_update <= self.DAYS_THRESHOLD:
+            days_since_update = self.calculate_days_passed(updated_at)
+            days_since_creation = self.calculate_days_passed(created_at)
+            if stars >= self.STARS_THRESHOLD and days_since_update <= self.DAYS_THRESHOLD and days_since_creation <= time_horizon:
                 filtered_sources.append(source)
         
         return filtered_sources
 
-    def calculateDaysPassed(self, date):
+    def calculate_days_passed(self, date):
         updated_date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ")
         days_since_update = (datetime.now() - updated_date).days
         return days_since_update

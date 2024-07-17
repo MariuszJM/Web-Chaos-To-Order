@@ -15,6 +15,7 @@ if __name__ == "__main__":
     queries = user_config['search_phrases']
     platforms = [platform.lower() for platform in user_config['platforms']]
     max_outputs_per_platform = user_config['max_outputs_per_platform']
+    time_horizon = user_config['time_horizon']
     specific_questions = user_config['specific_questions']
 
     llm = LLM()
@@ -26,7 +27,7 @@ if __name__ == "__main__":
         platforms.remove('youtube')
         youtube_processor = YouTubeProcessor()
         yt_top_data, yt_data_witout_content, yt_rejected_data = youtube_processor.process(
-            queries, sources_per_query=sources_per_query, questions=specific_questions
+            queries, sources_per_query=sources_per_query, questions=specific_questions, time_horizon=time_horizon, max_outputs_per_platform=max_outputs_per_platform
         )
         combined_data.combine(yt_top_data)
         data_witout_content.combine(yt_data_witout_content)
@@ -36,7 +37,7 @@ if __name__ == "__main__":
         platforms.remove('github')
         github_processor = GitHubProcessor()
         git_top_data, git_data_witout_content, git_rejected_data = github_processor.process(
-            queries, sources_per_query=sources_per_query, questions=specific_questions
+            queries, sources_per_query=sources_per_query, questions=specific_questions, time_horizon=time_horizon, max_outputs_per_platform=max_outputs_per_platform
         )
         combined_data.combine(git_top_data)
         data_witout_content.combine(git_data_witout_content)
@@ -46,7 +47,7 @@ if __name__ == "__main__":
         platforms.remove('udemy')
         udemy_processor = UdemyProcessor()
         u_top_data, u_data_witout_content, u_rejected_data = udemy_processor.process(
-            queries, sources_per_query=sources_per_query, questions=specific_questions
+            queries, sources_per_query=sources_per_query, questions=specific_questions, time_horizon=time_horizon, max_outputs_per_platform=max_outputs_per_platform
         )
         combined_data.combine(u_top_data)
         data_witout_content.combine(u_data_witout_content)

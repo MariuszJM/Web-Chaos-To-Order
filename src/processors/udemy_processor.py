@@ -37,18 +37,19 @@ class UdemyProcessor(SourceProcessor):
 
         return response.json().get("results", [])
 
-    def filter_low_quality_sources(self, sources: List[dict]) -> List[dict]:
+    def filter_low_quality_sources(self, sources: List[dict], time_horizon) -> List[dict]:
         filtered_sources = []
         
         for source in sources:
             avg_rating = source.get("avg_rating", 0)
             created = source.get("created", "")
-            days_since_creation = self.calculateDaysPassed(created)
-            if days_since_creation <= self.DAYS_THRESHOLD and avg_rating >= self.AVG_RATING_THRESHOLD:
+            days_since_creation = self.calculate_days_passed(created)
+            age_threshold = min(self.DAYS_THRESHOLD, time_horizon)
+            if days_since_creation <= age_threshold and avg_rating >= self.AVG_RATING_THRESHOLD:
                 filtered_sources.append(source)
         return filtered_sources
 
-    def calculateDaysPassed(self, date: str) -> int:
+    def calculate_days_passed(self, date: str) -> int:
         created_date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ")
         days_since_creation = (datetime.now() - created_date).days
         return days_since_creation

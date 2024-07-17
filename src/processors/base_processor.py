@@ -8,8 +8,8 @@ class SourceProcessor(ABC):
         self.platform_name = platform_name
         self.llm = LLM()
 
-    def process(self, queries: List[str], sources_per_query: int, questions: List[str], max_outputs_per_platform=7) -> DataStorage:
-        combined_data = self.combine_multiple_queries(queries, sources_per_query)
+    def process(self, queries: List[str], sources_per_query: int, questions: List[str], time_horizon, max_outputs_per_platform=7) -> DataStorage:
+        combined_data = self.combine_multiple_queries(queries, sources_per_query, time_horizon)
         data_with_content, data_witout_content = self.check_source_content(combined_data)
         tagged_data = self.add_smart_tags(data_with_content, questions)
         filtered_data = self.filter_relevant_sources(tagged_data)
@@ -17,16 +17,16 @@ class SourceProcessor(ABC):
         top_data, rejected_data = self.choose_top_sources(sorted_data, max_outputs_per_platform)
         return top_data, data_witout_content, rejected_data
     
-    def combine_multiple_queries(self, queries: List[str], sources_per_query: int) -> DataStorage:
+    def combine_multiple_queries(self, queries: List[str], sources_per_query: int, time_horizon) -> DataStorage:
         combined_storage = DataStorage()
         for query in queries:
-            query_storage = self.process_query(query, sources_per_query)
+            query_storage = self.process_query(query, sources_per_query, time_horizon)
             combined_storage.combine(query_storage)
         return combined_storage
     
-    def process_query(self, query: str, num_top_sources: int) -> DataStorage:
+    def process_query(self, query: str, num_top_sources: int, time_horizon) -> DataStorage:
         sources = self.fetch_source_items(query, 2 * num_top_sources)
-        filtered_sources = self.filter_low_quality_sources(sources)
+        filtered_sources = self.filter_low_quality_sources(sources, time_horizon)
         top_sources = self.select_top_sources(filtered_sources, num_top_sources)
         data_storage = self.collect_source_details_to_data_storage(top_sources)
         return data_storage
@@ -36,7 +36,7 @@ class SourceProcessor(ABC):
         pass
     
     @abstractmethod
-    def filter_low_quality_sources(self, sources: List[dict]) -> List[dict]:
+    def filter_low_quality_sources(self, sources: List[dict], time_horizon) -> List[dict]:
         pass
     
     def select_top_sources(self, sources: List[dict], num_top_sources: int) -> List[dict]:
