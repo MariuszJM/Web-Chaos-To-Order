@@ -1,4 +1,5 @@
 import os
+import yaml
 from src.processors.github_processor import GitHubProcessor
 from src.processors.udemy_processor import UdemyProcessor
 from src.processors.youtube_processor import YouTubeProcessor
@@ -10,7 +11,6 @@ from src.utils import load_config, create_output_directory
 if __name__ == "__main__":
     execution_config = load_config('./config/execution_config.yaml')
     sources_per_query = execution_config['sources_per_query']
-    platform_shortcuts = execution_config['platform_shortcuts']
     user_config = load_config('./config/user_config.yaml')
     queries = user_config['search_phrases']
     platforms = [platform.lower() for platform in user_config['platforms']]
@@ -19,9 +19,6 @@ if __name__ == "__main__":
 
     llm = LLM()
     name = llm.provide_run_name(queries, specific_questions)
-    for platform in platforms:
-        name += "_" + platform_shortcuts[platform]
-
     combined_data = DataStorage()
     data_witout_content = DataStorage()
     rejected_data = DataStorage()
@@ -62,6 +59,8 @@ if __name__ == "__main__":
     combined_data.save_to_yaml(os.path.join(output_dir, f"{name}.yaml"))
     data_witout_content.save_to_yaml(os.path.join(output_dir, f"data_witout_content.yaml"))
     rejected_data.save_to_yaml(os.path.join(output_dir, f"rejected_data.yaml"))
-    user_config.save_to_yaml(os.path.join(output_dir, f"user_config.yaml"))
+    
+    with open(os.path.join(output_dir, f"run_config.yaml"), "w") as file:
+            yaml.dump(user_config, file, default_flow_style=False, sort_keys=False)
     print("Combined Data:", combined_data.to_dict())
     print(f"Data saved to: {output_dir}")
