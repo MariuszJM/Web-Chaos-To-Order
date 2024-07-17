@@ -40,14 +40,16 @@ class GitHubProcessor(SourceProcessor):
         for source in sources:
             stars = source.get("stargazers_count", 0)
             updated_at = source.get("updated_at", "")
-            days_since_update = self.calculate_days_since_update(updated_at)
+            created_at = source.get("created_at", "")
+            days_since_update = self.calculateDaysPassed(updated_at)
+            # days_since_creation = self.calculateDaysPassed(created_at)
             if stars >= self.STARS_THRESHOLD and days_since_update <= self.DAYS_THRESHOLD:
                 filtered_sources.append(source)
         
         return filtered_sources
 
-    def calculate_days_since_update(self, updated_at):
-        updated_date = datetime.strptime(updated_at, "%Y-%m-%dT%H:%M:%SZ")
+    def calculateDaysPassed(self, date):
+        updated_date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ")
         days_since_update = (datetime.now() - updated_date).days
         return days_since_update
 
