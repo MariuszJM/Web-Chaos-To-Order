@@ -23,35 +23,45 @@ if __name__ == "__main__":
         name += "_" + platform_shortcuts[platform]
 
     combined_data = DataStorage()
-
+    data_witout_content = DataStorage()
+    rejected_data = DataStorage()
     if 'youtube' in platforms:
         platforms.remove('youtube')
         youtube_processor = YouTubeProcessor()
-        youtube_combined_data = youtube_processor.process(
+        yt_top_data, yt_data_witout_content, yt_rejected_data = youtube_processor.process(
             queries, sources_per_query=sources_per_query, questions=specific_questions
         )
-        combined_data.combine(youtube_combined_data)
+        combined_data.combine(yt_top_data)
+        data_witout_content.combine(yt_data_witout_content)
+        rejected_data.combine(yt_rejected_data)
 
     if 'github' in platforms:
         platforms.remove('github')
         github_processor = GitHubProcessor()
-        github_combined_data = github_processor.process(
+        git_top_data, git_data_witout_content, git_rejected_data = github_processor.process(
             queries, sources_per_query=sources_per_query, questions=specific_questions
         )
-        combined_data.combine(github_combined_data)
+        combined_data.combine(git_top_data)
+        data_witout_content.combine(git_data_witout_content)
+        rejected_data.combine(git_rejected_data)
     
     if 'udemy' in platforms:
         platforms.remove('udemy')
         udemy_processor = UdemyProcessor()
-        udemy_combined_data = udemy_processor.process(
+        u_top_data, u_data_witout_content, u_rejected_data = udemy_processor.process(
             queries, sources_per_query=sources_per_query, questions=specific_questions
         )
-        combined_data.combine(udemy_combined_data)
+        combined_data.combine(u_top_data)
+        data_witout_content.combine(u_data_witout_content)
+        rejected_data.combine(u_rejected_data)
 
     if len(platforms) != 0: 
         print(f"Platrofms: {platforms} are not available")
 
     output_dir = create_output_directory('runs')
     combined_data.save_to_yaml(os.path.join(output_dir, f"{name}.yaml"))
+    data_witout_content.save_to_yaml(os.path.join(output_dir, f"data_witout_content.yaml"))
+    rejected_data.save_to_yaml(os.path.join(output_dir, f"rejected_data.yaml"))
+    user_config.save_to_yaml(os.path.join(output_dir, f"user_config.yaml"))
     print("Combined Data:", combined_data.to_dict())
     print(f"Data saved to: {output_dir}")

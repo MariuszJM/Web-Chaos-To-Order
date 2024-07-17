@@ -8,12 +8,14 @@ class SourceProcessor(ABC):
         self.platform_name = platform_name
         self.llm = LLM()
 
-    def process(self, queries: List[str], sources_per_query: int, questions: List[str]) -> DataStorage:
+    def process(self, queries: List[str], sources_per_query: int, questions: List[str], max_outputs_per_platform=7) -> DataStorage:
         combined_data = self.combine_multiple_queries(queries, sources_per_query)
-        tagged_data = self.add_smart_tags(combined_data, questions)
+        data_with_content, data_witout_content = self.check_source_content(combined_data)
+        tagged_data = self.add_smart_tags(data_with_content, questions)
         filtered_data = self.filter_relevant_sources(tagged_data)
         sorted_data = self.rank_sources_by_relevance(filtered_data)
-        return sorted_data
+        top_data, rejected_data = self.choose_top_sources(sorted_data, max_outputs_per_platform)
+        return top_data, data_witout_content, rejected_data
     
     def combine_multiple_queries(self, queries: List[str], sources_per_query: int) -> DataStorage:
         combined_storage = DataStorage()
@@ -97,3 +99,26 @@ class SourceProcessor(ABC):
             sorted_data[platform_name] = sorted_titles
         data_storage.data = sorted_data
         return data_storage
+    
+    def choose_top_sources(self, data_storage: DataStorage, max_outputs_per_platform: int):
+        top_data = DataStorage()
+        rejected_data = DataStorage()
+        for platform_name, titles in data_storage.data.items():
+            for title in titles.keys():
+                if len(top_data.data.get(platform_name, {})) < max_outputs_per_platform:
+                    top_data.add_data(platform_name, title, **titles[title])
+                else:
+                    rejected_data.add_data(platform_name, title, **titles[title])
+        return top_data, rejected_data
+
+    def check_source_content(self, data_storage: DataStorage):
+        data_with_content = DataStorage()
+        data_witout_content = DataStorage()
+        for platform_name, titles in data_storage.data.items():
+            for title, details in titles.items():
+                content = details.get("content")
+                if content:
+                    data_with_content.add_data(platform_name, title, **titles[title])
+                else:
+                    data_witout_content.add_data(platform_name, title, **titles[title])
+        return data_with_content, data_witout_content
