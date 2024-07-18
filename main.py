@@ -3,11 +3,12 @@ import yaml
 from src.processors.github_processor import GitHubProcessor
 from src.processors.udemy_processor import UdemyProcessor
 from src.processors.youtube_processor import YouTubeProcessor
+from src.processors.google_processor import GoogleProcessor
 from src.data_storage import DataStorage
 from src.llm import LLM
 from src.utils import load_config, create_output_directory
 
-
+        
 if __name__ == "__main__":
     execution_config = load_config('./config/execution_config.yaml')
     sources_per_query = execution_config['sources_per_query']
@@ -23,6 +24,16 @@ if __name__ == "__main__":
     combined_data = DataStorage()
     data_witout_content = DataStorage()
     rejected_data = DataStorage()
+    if 'google' in platforms:
+        platforms.remove('google')
+        google_processor = GoogleProcessor(platform_name='google')
+        yt_top_data, yt_data_witout_content, yt_rejected_data = google_processor.process(
+            queries, sources_per_query=sources_per_query, questions=specific_questions, time_horizon=time_horizon, max_outputs_per_platform=max_outputs_per_platform
+        )
+        combined_data.combine(yt_top_data)
+        data_witout_content.combine(yt_data_witout_content)
+        rejected_data.combine(yt_rejected_data)
+    
     if 'youtube' in platforms:
         platforms.remove('youtube')
         youtube_processor = YouTubeProcessor()
