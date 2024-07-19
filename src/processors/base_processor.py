@@ -12,10 +12,10 @@ class SourceProcessor(ABC):
         combined_data = self.combine_multiple_queries(queries, sources_per_query, time_horizon)
         data_with_content, data_witout_content = self.check_source_content(combined_data)
         tagged_data = self.add_smart_tags(data_with_content, questions)
-        tagged_data = self.filter_relevant_sources(tagged_data)
-        tagged_data = self.rank_sources_by_relevance(tagged_data)
-        top_data, rejected_data = self.choose_top_sources(tagged_data, max_outputs_per_platform)
-        return top_data, data_witout_content, rejected_data
+        relevant_data, not_relevant_data = self.filter_relevant_sources(tagged_data)
+        ranked_data = self.rank_sources_by_relevance(relevant_data)
+        top_data, less_relevant_data = self.choose_top_sources(ranked_data, max_outputs_per_platform)
+        return top_data, data_witout_content, less_relevant_data, not_relevant_data
     
     def combine_multiple_queries(self, queries: List[str], sources_per_query: int, time_horizon) -> DataStorage:
         combined_storage = DataStorage()
@@ -82,13 +82,15 @@ class SourceProcessor(ABC):
         return data_storage
 
     def filter_relevant_sources(self, data_storage: DataStorage) -> DataStorage:
-        filtered_data = {}
+        relevant_data = DataStorage()
+        not_relevant_data = DataStorage()
         for platform_name, titles in data_storage.data.items():
-            filtered_titles = {title: info for title, info in titles.items() if info.get("relevance_score", 0) > 0}
-            if filtered_titles:
-                filtered_data[platform_name] = filtered_titles
-        data_storage.data = filtered_data
-        return data_storage
+            for title, info in titles.items():
+                if info.get("relevance_score", 0) > 0:
+                    relevant_data.add_data(platform_name, title, **titles[title])
+                else:
+                    not_relevant_data.add_data(platform_name, title, **titles[title])
+        return relevant_data, not_relevant_data
 
     def rank_sources_by_relevance(self, data_storage: DataStorage) -> DataStorage:
         sorted_data = {}
@@ -102,14 +104,14 @@ class SourceProcessor(ABC):
     
     def choose_top_sources(self, data_storage: DataStorage, max_outputs_per_platform: int):
         top_data = DataStorage()
-        rejected_data = DataStorage()
+        less_relevant_data = DataStorage()
         for platform_name, titles in data_storage.data.items():
             for title in titles.keys():
                 if len(top_data.data.get(platform_name, {})) < max_outputs_per_platform:
                     top_data.add_data(platform_name, title, **titles[title])
                 else:
-                    rejected_data.add_data(platform_name, title, **titles[title])
-        return top_data, rejected_data
+                    less_relevant_data.add_data(platform_name, title, **titles[title])
+        return top_data, less_relevant_data
 
     def check_source_content(self, data_storage: DataStorage):
         data_with_content = DataStorage()
