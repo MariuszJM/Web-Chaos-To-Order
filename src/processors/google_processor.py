@@ -3,6 +3,11 @@ from src.data_storage import DataStorage
 from src.processors.base_processor import SourceProcessor
 from credentials.credentials import GOOGLE_CSE_IDS, GOOGLE_KEY
 import requests
+from src.utils import load_config
+
+
+user_config = load_config('config/user_config.yaml')
+TIME_HORIZON = user_config['time_horizon']
 
 
 class GoogleProcessor(SourceProcessor):
@@ -18,7 +23,7 @@ class GoogleProcessor(SourceProcessor):
         # Ensure limit does not exceed 10
         if limit > 10:
             limit = 10
-        response = self.google.cse().list(q=query, cx=GOOGLE_CSE_IDS[self.platform_name], num=limit, dateRestrict="d199").execute()
+        response = self.google.cse().list(q=query, cx=GOOGLE_CSE_IDS[self.platform_name], num=limit, dateRestrict=f"d{TIME_HORIZON}").execute()
         return response.get("items", [])
 
     def filter_low_quality_sources(self, sources, time_horizon):
