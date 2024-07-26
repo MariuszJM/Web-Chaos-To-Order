@@ -1,5 +1,4 @@
 from src.processors.github_processor import GitHubProcessor
-from src.processors.udemy_processor import UdemyProcessor
 from src.processors.youtube_processor import YouTubeProcessor
 from src.processors.google_processor import GoogleProcessor
 
@@ -12,7 +11,6 @@ class ProcessorFactory:
         processors = {
             'youtube': YouTubeProcessor,
             'github': GitHubProcessor,
-            'udemy': UdemyProcessor,
             'google': GoogleProcessor
         }
         

@@ -56,9 +56,6 @@ class SourceProcessor(ABC):
                 content = data_storage.data[platform_name][title].get("content")
                 if not content:
                     continue
-                
-                if isinstance(content, dict):
-                    content = "\n".join([f"{chapter}: {', '.join(lectures)}" for chapter, lectures in content.items()])
 
                 summary, combine_flag = self.llm.summarize(content=content, questions=questions)
 
