@@ -3,19 +3,19 @@ from typing import List
 from src.data_storage import DataStorage
 from src.llm import LLM
 
-class SourceProcessor(ABC):
+class BaseProcessor(ABC):
     def __init__(self, platform_name: str):
         self.platform_name = platform_name
         self.llm = LLM()
 
     def process(self, queries: List[str], sources_per_query: int, questions: List[str], time_horizon, max_outputs_per_platform=7) -> DataStorage:
         combined_data = self.combine_multiple_queries(queries, sources_per_query, time_horizon)
-        data_with_content, data_witout_content = self.check_source_content(combined_data)
+        data_with_content, data_without_content = self.check_source_content(combined_data)
         tagged_data = self.add_smart_tags(data_with_content, questions)
         relevant_data, not_relevant_data = self.filter_relevant_sources(tagged_data)
         ranked_data = self.rank_sources_by_relevance(relevant_data)
         top_data, less_relevant_data = self.choose_top_sources(ranked_data, max_outputs_per_platform)
-        return top_data, data_witout_content, less_relevant_data, not_relevant_data
+        return top_data, data_without_content, less_relevant_data, not_relevant_data
     
     def combine_multiple_queries(self, queries: List[str], sources_per_query: int, time_horizon) -> DataStorage:
         combined_storage = DataStorage()
@@ -24,30 +24,8 @@ class SourceProcessor(ABC):
             combined_storage.combine(query_storage)
         return combined_storage
     
+    @abstractmethod
     def process_query(self, query: str, num_top_sources: int, time_horizon) -> DataStorage:
-        sources = self.fetch_source_items(query, 2 * num_top_sources)
-        filtered_sources = self.filter_low_quality_sources(sources, time_horizon)
-        top_sources = self.select_top_sources(filtered_sources, num_top_sources)
-        data_storage = self.collect_source_details_to_data_storage(top_sources)
-        return data_storage
-    
-    @abstractmethod
-    def fetch_source_items(self, query: str, limit: int) -> List[dict]:
-        pass
-    
-    @abstractmethod
-    def filter_low_quality_sources(self, sources: List[dict], time_horizon) -> List[dict]:
-        pass
-    
-    def select_top_sources(self, sources: List[dict], num_top_sources: int) -> List[dict]:
-        return sources[:num_top_sources]
-    
-    @abstractmethod
-    def collect_source_details_to_data_storage(self, sources: List[dict]) -> DataStorage:
-        pass
-
-    @abstractmethod
-    def fetch_detailed_content(self, identifier: str) -> str:
         pass
 
     def add_smart_tags(self, data_storage: DataStorage, questions: List[str]) -> DataStorage:
@@ -112,12 +90,39 @@ class SourceProcessor(ABC):
 
     def check_source_content(self, data_storage: DataStorage):
         data_with_content = DataStorage()
-        data_witout_content = DataStorage()
+        data_without_content = DataStorage()
         for platform_name, titles in data_storage.data.items():
             for title, details in titles.items():
                 content = details.get("content")
                 if content:
                     data_with_content.add_data(platform_name, title, **titles[title])
                 else:
-                    data_witout_content.add_data(platform_name, title, **titles[title])
-        return data_with_content, data_witout_content
+                    data_without_content.add_data(platform_name, title, **titles[title])
+        return data_with_content, data_without_content
+
+class InDepthProcessor(BaseProcessor):
+    def process_query(self, query: str, num_top_sources: int, time_horizon) -> DataStorage:
+        sources = self.fetch_source_items(query, 2 * num_top_sources)
+        filtered_sources = self.filter_low_quality_sources(sources, time_horizon)
+        top_sources = self.select_top_sources(filtered_sources, num_top_sources)
+        data_storage = self.collect_source_details_to_data_storage(top_sources)
+        return data_storage
+    
+    @abstractmethod
+    def fetch_source_items(self, query: str, limit: int) -> List[dict]:
+        pass
+    
+    @abstractmethod
+    def filter_low_quality_sources(self, sources: List[dict], time_horizon) -> List[dict]:
+        pass
+    
+    def select_top_sources(self, sources: List[dict], num_top_sources: int) -> List[dict]:
+        return sources[:num_top_sources]
+    
+    @abstractmethod
+    def collect_source_details_to_data_storage(self, sources: List[dict]) -> DataStorage:
+        pass
+
+    @abstractmethod
+    def fetch_detailed_content(self, identifier: str) -> str:
+        pass

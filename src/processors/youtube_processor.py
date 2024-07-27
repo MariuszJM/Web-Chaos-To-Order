@@ -4,12 +4,12 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from youtube_transcript_api import YouTubeTranscriptApi
 from src.data_storage import DataStorage
-from src.processors.base_processor import SourceProcessor
+from src.processors.base_processor import InDepthProcessor
 from google.auth.transport.requests import Request
 from datetime import datetime
 
 
-class YouTubeProcessor(SourceProcessor):
+class YouTubeProcessor(InDepthProcessor):
     SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
     TOKEN_PATH = "./credentials/token.json"
     CREDENTIALS_FILE = "./credentials/credentials.json"

@@ -1,11 +1,11 @@
 import requests
 import base64
 from src.data_storage import DataStorage
-from src.processors.base_processor import SourceProcessor
+from src.processors.base_processor import InDepthProcessor
 from credentials.credentials import GITHUB_TOKEN
 from datetime import datetime
 
-class GitHubProcessor(SourceProcessor):
+class GitHubProcessor(InDepthProcessor):
     BASE_URL = "https://api.github.com/search/repositories"
     README_URL_TEMPLATE = "https://api.github.com/repos/{repo_full_name}/readme"
     STARS_THRESHOLD = 50
