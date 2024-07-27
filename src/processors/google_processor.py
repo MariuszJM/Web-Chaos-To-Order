@@ -2,6 +2,7 @@ import requests
 from googleapiclient.discovery import build
 from credentials.credentials import GOOGLE_CSE_IDS, GOOGLE_KEY
 from src.processors.base_processor import BaseProcessor
+from src.webscrappers.scrapper_factory import ScrapperFactory
 
 
 class GoogleProcessor(BaseProcessor):
@@ -10,6 +11,7 @@ class GoogleProcessor(BaseProcessor):
     def __init__(self, platform_name="Google"):
         super().__init__(platform_name)
         self.google = self.authenticate_google()
+        self.scrapper = ScrapperFactory.create_scrapper(scrapper_type='BeautifulSoup')
     def authenticate_google(self):
         return build("customsearch", "v1", developerKey=GOOGLE_KEY)
 
@@ -28,5 +30,5 @@ class GoogleProcessor(BaseProcessor):
         return data
         
     def fetch_detailed_content(self, url):
-        response = requests.get("https://r.jina.ai/"+ url)
-        return response.text
+        webside_content = self.scrapper.fetch_website_content(url)
+        return webside_content
