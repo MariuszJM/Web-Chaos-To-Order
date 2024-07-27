@@ -8,14 +8,18 @@ class DataStorage:
 
     def add_data(self, platform_name, title, **tags):
         self.data.setdefault(platform_name, {})[title] = tags
-        
+    
     def combine(self, data_storage):
         for platform_name, titles in data_storage.data.items():
             self.data.setdefault(platform_name, {}).update(titles)
 
+    def add_data_list(self, platform_name, data_list):
+        for item_details in data_list:
+            title = item_details.pop('title')
+            self.add_data(platform_name, title, **item_details)
+
     def to_dict(self):
         return self.data
-
 
     def clean_title(self, title):
         clean_title = re.sub(r'[^a-zA-Z0-9\s]', '', title)

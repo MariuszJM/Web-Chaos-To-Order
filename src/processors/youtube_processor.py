@@ -5,7 +5,6 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from youtube_transcript_api import YouTubeTranscriptApi
 from google.auth.transport.requests import Request
-from src.data_storage import DataStorage
 from src.processors.base_processor import InDepthProcessor
 
 
@@ -60,12 +59,13 @@ class YouTubeProcessor(InDepthProcessor):
         return days_since_creation
     
     def collect_source_details_to_data_storage(self, sources):
-        top_data_storage = DataStorage()
-        for source, title, url, video_id in sources:
-            transcript = self.fetch_detailed_content(video_id)
-            top_data_storage.add_data(source, title, url=url, content=transcript)
-
-        return top_data_storage
+        data = []
+        for _, title, url, video_id in sources:
+            item_details = {'title': title, 
+                            'url':url, 
+                            'content':self.fetch_detailed_content(video_id)}
+            data.append(item_details)
+        return data
 
     def get_video_details(self, video_id):
         response = self.youtube.videos().list(part="statistics,snippet", id=video_id).execute()["items"][0]

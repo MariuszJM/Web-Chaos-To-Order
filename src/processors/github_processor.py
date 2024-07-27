@@ -2,7 +2,6 @@ import requests
 import base64
 from credentials.credentials import GITHUB_TOKEN
 from datetime import datetime
-from src.data_storage import DataStorage
 from src.processors.base_processor import InDepthProcessor
 
 
@@ -55,13 +54,14 @@ class GitHubProcessor(InDepthProcessor):
         return days_since_update
 
     def collect_source_details_to_data_storage(self, sources):
-        top_data_storage = DataStorage()
+        top_data_items = []
         for repo in sources:
             repo_info = self.get_repo_info(repo)
             readme_content = self.fetch_detailed_content(repo["full_name"])
             repo_info["content"] = readme_content
-            top_data_storage.add_data(self.platform_name, repo["full_name"], **repo_info)
-        return top_data_storage
+            repo_info['title'] = repo["full_name"]
+            top_data_items.append(repo_info)
+        return top_data_items
 
     def fetch_detailed_content(self, repo_full_name: str) -> str:
         url = self.README_URL_TEMPLATE.format(repo_full_name=repo_full_name)

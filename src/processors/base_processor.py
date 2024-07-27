@@ -21,8 +21,8 @@ class BaseProcessor(ABC):
     def combine_multiple_queries(self, queries: List[str], sources_per_query: int, time_horizon) -> DataStorage:
         combined_storage = DataStorage()
         for query in queries:
-            query_storage = self.process_query(query, sources_per_query, time_horizon)
-            combined_storage.combine(query_storage)
+            query_list = self.process_query(query, sources_per_query, time_horizon)
+            combined_storage.add_data_list(self.platform_name, query_list)
         return combined_storage
     
     @abstractmethod
