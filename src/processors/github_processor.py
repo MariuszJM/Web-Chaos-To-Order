@@ -1,9 +1,10 @@
 import requests
 import base64
-from src.data_storage import DataStorage
-from src.processors.base_processor import InDepthProcessor
 from credentials.credentials import GITHUB_TOKEN
 from datetime import datetime
+from src.data_storage import DataStorage
+from src.processors.base_processor import InDepthProcessor
+
 
 class GitHubProcessor(InDepthProcessor):
     BASE_URL = "https://api.github.com/search/repositories"

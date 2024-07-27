@@ -3,6 +3,7 @@ from typing import List
 from src.data_storage import DataStorage
 from src.llm import LLM
 
+
 class BaseProcessor(ABC):
     def __init__(self, platform_name: str):
         self.platform_name = platform_name
@@ -99,6 +100,7 @@ class BaseProcessor(ABC):
                 else:
                     data_without_content.add_data(platform_name, title, **titles[title])
         return data_with_content, data_without_content
+
 
 class InDepthProcessor(BaseProcessor):
     def process_query(self, query: str, num_top_sources: int, time_horizon) -> DataStorage:

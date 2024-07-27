@@ -1,12 +1,12 @@
 import os
+from datetime import datetime
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from youtube_transcript_api import YouTubeTranscriptApi
+from google.auth.transport.requests import Request
 from src.data_storage import DataStorage
 from src.processors.base_processor import InDepthProcessor
-from google.auth.transport.requests import Request
-from datetime import datetime
 
 
 class YouTubeProcessor(InDepthProcessor):
