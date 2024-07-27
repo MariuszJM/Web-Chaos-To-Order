@@ -107,7 +107,7 @@ class InDepthProcessor(BaseProcessor):
         sources = self.fetch_source_items(query, 2 * num_top_sources)
         filtered_sources = self.filter_low_quality_sources(sources, time_horizon)
         top_sources = self.select_top_sources(filtered_sources, num_top_sources)
-        data_storage = self.collect_source_details_to_data_storage(top_sources)
+        data_storage = self.collect_source_details(top_sources)
         return data_storage
     
     @abstractmethod
@@ -122,7 +122,7 @@ class InDepthProcessor(BaseProcessor):
         return sources[:num_top_sources]
     
     @abstractmethod
-    def collect_source_details_to_data_storage(self, sources: List[dict]) -> DataStorage:
+    def collect_source_details(self, sources: List[dict]) -> DataStorage:
         pass
 
     @abstractmethod

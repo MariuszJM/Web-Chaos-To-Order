@@ -58,7 +58,7 @@ class YouTubeProcessor(InDepthProcessor):
         days_since_creation = (datetime.now() - created_date).days
         return days_since_creation
     
-    def collect_source_details_to_data_storage(self, sources):
+    def collect_source_details(self, sources):
         data = []
         for _, title, url, video_id in sources:
             item_details = {'title': title, 

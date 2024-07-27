@@ -1,4 +1,3 @@
-import requests
 from googleapiclient.discovery import build
 from credentials.credentials import GOOGLE_CSE_IDS, GOOGLE_KEY
 from src.processors.base_processor import BaseProcessor

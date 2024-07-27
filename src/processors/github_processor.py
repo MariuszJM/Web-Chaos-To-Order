@@ -53,7 +53,7 @@ class GitHubProcessor(InDepthProcessor):
         days_since_update = (datetime.now() - updated_date).days
         return days_since_update
 
-    def collect_source_details_to_data_storage(self, sources):
+    def collect_source_details(self, sources):
         top_data_items = []
         for repo in sources:
             repo_info = self.get_repo_info(repo)
