@@ -44,10 +44,10 @@ class BaseLLM:
         return text.split()
 
     def organize_summarization_into_one(self, combined_text: str) -> str:
-        prompt = (f"You are an expert content information organizer. Combine and organize the following summaries into a single cohesive summary. "
+        prompt = ("You are an expert content information organizer. Combine and organize the following summaries into a single cohesive summary. "
                   "Each paragraph should be separated by a newline and focus on a single key point. Don't add any comments, just the summary. "
                   "Remove redundant information. Make it as detailed as possible. The output shouldn't be much smaller than the input. "
-                  "You are not a summarizer, just an organizer.\nSummaries: {combined_text}")
+                  f"You are not a summarizer, just an organizer.\nSummaries: {combined_text}")
         return self.generate_response(prompt)
 
     def ask_llama_question(self, question: str, details: str, detailed_summary: str) -> str:
