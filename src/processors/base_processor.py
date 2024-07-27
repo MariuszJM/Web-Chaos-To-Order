@@ -43,6 +43,7 @@ class BaseProcessor(ABC):
 
                 if combine_flag:
                     combined_summary = self.llm.organize_summarization_into_one(summary)
+                    data_storage.data[platform_name][title].pop("content")
                     data_storage.data[platform_name][title]["detailed_summary"] = summary
                     data_storage.data[platform_name][title]["summary"] = combined_summary
                 else:
