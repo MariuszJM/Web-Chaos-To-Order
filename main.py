@@ -1,7 +1,7 @@
 import os
 import yaml
 from src.data_storage import DataStorage
-from src.llm import LLM
+from src.llm.llm_factory import LLMFactory
 from src.utils import load_config, create_output_directory
 from src.processors.processor_factory import ProcessorFactory
 
@@ -15,7 +15,7 @@ if __name__ == "__main__":
     time_horizon = user_config['time_horizon']
     specific_questions = user_config['specific_questions']
 
-    llm = LLM()
+    llm = LLMFactory.create_llm(model_type="ollama", model_name="llama3:instruct")
     name = llm.provide_run_name(queries, specific_questions)
     combined_data = DataStorage()
     comb_data_witout_content = DataStorage()

@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import List
 from src.data_storage import DataStorage
-from src.llm import LLM
+from src.llm.llm_factory import LLMFactory
 
 
 class BaseProcessor(ABC):
     def __init__(self, platform_name: str):
         self.platform_name = platform_name
-        self.llm = LLM()
+        self.llm = LLMFactory.create_llm(model_type="ollama", model_name="llama3:instruct")
 
     def process(self, queries: List[str], sources_per_query: int, questions: List[str], time_horizon, max_outputs_per_platform=7) -> DataStorage:
         combined_data = self.combine_multiple_queries(queries, sources_per_query, time_horizon)
