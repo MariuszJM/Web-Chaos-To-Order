@@ -14,7 +14,7 @@ def process_platforms(platforms, queries, sources_per_query, specific_questions,
             )
             if index > 0:
                 combined_results.combine(top_results)
-                combined_no_content_results.combine(results_without_content)
+                combined_no_content_results.combine(results_without_content)                                                                                                                                                                                                                      
                 combined_less_relevant_results.combine(less_relevant_results)
                 combined_rejected_results.combine(rejected_results)
             else:
@@ -22,9 +22,14 @@ def process_platforms(platforms, queries, sources_per_query, specific_questions,
                 combined_no_content_results = results_without_content
                 combined_less_relevant_results = less_relevant_results
                 combined_rejected_results = rejected_results
-                run_name = processor.provide_run_name(queries, specific_questions)
+                run_name = processor.llm.provide_run_name(queries, specific_questions)
 
         except ValueError as e:
             print(e)
+        rest_results = {
+        'no_content_results': combined_no_content_results.data,
+        'less_relevant_results': combined_less_relevant_results.data,
+        'rejected_by_relevance': combined_rejected_results.data
+    }
 
-    return combined_results, combined_no_content_results, combined_less_relevant_results, combined_rejected_results, run_name
+    return combined_results, rest_results, run_name

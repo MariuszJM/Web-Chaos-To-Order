@@ -15,7 +15,7 @@ def create_output_directory(base_dir):
 
 def save_data(output_dir, name, results_data, rest_data, user_config):
     results_data.save_to_yaml(os.path.join(output_dir, f"{name}.yaml"))
-    with open(os.path.join(output_dir, f"filtered_data.yaml"), "w") as file:
+    with open(os.path.join(output_dir, f"rest_of_the_data.yaml"), "w") as file:
         yaml.dump(rest_data, file, default_flow_style=False, sort_keys=False)
     with open(os.path.join(output_dir, f"run_config.yaml"), "w") as file:
         yaml.dump(user_config, file, default_flow_style=False, sort_keys=False)

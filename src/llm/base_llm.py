@@ -1,12 +1,14 @@
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from typing import List, Tuple
 
+CHUNK_SIZE = 7500
+CHUNK_OVERLAP = 150
 
 class BaseLLM:
     def __init__(self, model_name: str):
         self.model_name = model_name
 
-    def split_text_to_chunks(self, text: str, chunk_size=7500, chunk_overlap=150) -> List[str]:
+    def split_text_to_chunks(self, text: str, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP) -> List[str]:
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap
@@ -16,7 +18,7 @@ class BaseLLM:
     def generate_response(self, prompt: str) -> str:
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def summarize(self, content: str, chunk_size=7500, questions=[]) -> Tuple[str, bool]:
+    def summarize(self, content: str, chunk_size=CHUNK_SIZE, questions=[]) -> Tuple[str, bool]:
         if not content:
             return "Content not available.", False
 
@@ -33,8 +35,8 @@ class BaseLLM:
 
         combined_summary = "\n".join(summaries)
         
-        if len(self.tokenize(combined_summary)) > 7500:
-            combined_summary, _ = self.summarize(combined_summary, chunk_size=7500)
+        if len(self.tokenize(combined_summary)) > CHUNK_SIZE:
+            combined_summary, _ = self.summarize(combined_summary, chunk_size=CHUNK_SIZE)
         
         return combined_summary, len(summaries) > 1
 
@@ -49,7 +51,7 @@ class BaseLLM:
         return self.generate_response(prompt)
 
     def ask_llama_question(self, question: str, details: str, detailed_summary: str) -> str:
-        text = details if len(self.tokenize(details)) <= 7500 else detailed_summary
+        text = details if len(self.tokenize(details)) <= CHUNK_SIZE else detailed_summary
         prompt = f"Based on the text, answer the question: {question}\n\ntext:\n{text}"
         return self.generate_response(prompt)
 

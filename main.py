@@ -10,16 +10,11 @@ def main():
     time_horizon = config['time_horizon']
     specific_questions = config['specific_questions']
 
-    results, no_content_results, less_relevant_results, rejected_results, run_name = process_platforms(
+    results, rest_results, run_name = process_platforms(
         platforms, search_phrases, sources_per_query, specific_questions, time_horizon, max_outputs
     )
 
     output_dir = create_output_directory('runs')
-    rest_results = {
-        'no_content_results': no_content_results.data,
-        'less_relevant_results': less_relevant_results.data,
-        'rejected_by_relevance': rejected_results.data
-    }
     save_data(output_dir, run_name, results, rest_results, config)
 
     print("Combined Results:", results.to_dict())

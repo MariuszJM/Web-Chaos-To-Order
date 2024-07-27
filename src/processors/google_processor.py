@@ -4,13 +4,16 @@ from src.processors.base_processor import BaseProcessor
 from src.webscrappers.scrapper_factory import ScrapperFactory
 
 
+SCRAPPER_TYPE = 'BeautifulSoup'
+
+
 class GoogleProcessor(BaseProcessor):
     QUALITY_THRESHOLD = 0.2
 
     def __init__(self, platform_name="Google"):
         super().__init__(platform_name)
         self.google = self.authenticate_google()
-        self.scrapper = ScrapperFactory.create_scrapper(scrapper_type='BeautifulSoup')
+        self.scrapper = ScrapperFactory.create_scrapper(scrapper_type=SCRAPPER_TYPE)
     def authenticate_google(self):
         return build("customsearch", "v1", developerKey=GOOGLE_KEY)
 
