@@ -13,3 +13,5 @@ tmp.py
 courser.py
 main.py
 credentials
+runs/*
+tmp.sh

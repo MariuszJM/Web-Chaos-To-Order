@@ -1,5 +1,8 @@
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from typing import List, Tuple
+import logging
+
+logger = logging.getLogger(__name__)
 
 CHUNK_SIZE = 7500
 CHUNK_OVERLAP = 150
@@ -7,13 +10,16 @@ CHUNK_OVERLAP = 150
 class BaseLLM:
     def __init__(self, model_name: str):
         self.model_name = model_name
+        logger.debug("BaseLLM initialized with model: %s", model_name)
 
     def split_text_to_chunks(self, text: str, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP) -> List[str]:
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap
         )
-        return text_splitter.split_text(text)
+        chunks = text_splitter.split_text(text)
+        logger.debug("Text split into %d chunks", len(chunks))
+        return chunks
 
     def generate_response(self, prompt: str) -> str:
         raise NotImplementedError("Subclasses should implement this method.")

@@ -1,16 +1,20 @@
 from abc import ABC, abstractmethod
 from typing import List
+import logging
+from tqdm import tqdm
 from src.data_storage import DataStorage
 from src.llm.llm_factory import LLMFactory
 
+logger = logging.getLogger(__name__)
+
 MODEL_PLATFORM = "ollama"
 MODEL_NAME = "llama3:instruct"
-
 
 class BaseProcessor(ABC):
     def __init__(self, platform_name: str):
         self.platform_name = platform_name
         self.llm = LLMFactory.create_llm(model_type=MODEL_PLATFORM, model_name=MODEL_NAME)
+        logger.debug("BaseProcessor initialized for platform: %s", platform_name)
 
     def process(self, queries: List[str], sources_per_query: int, questions: List[str], time_horizon, max_outputs_per_platform=7) -> DataStorage:
         combined_data = self.combine_multiple_queries(queries, sources_per_query, time_horizon)
@@ -19,8 +23,9 @@ class BaseProcessor(ABC):
         relevant_data, not_relevant_data = self.filter_relevant_sources(tagged_data)
         ranked_data = self.rank_sources_by_relevance(relevant_data)
         top_data, less_relevant_data = self.choose_top_sources(ranked_data, max_outputs_per_platform)
+        logger.info("Processing completed for platform: %s", self.platform_name)
         return top_data, data_without_content, less_relevant_data, not_relevant_data
-    
+
     def combine_multiple_queries(self, queries: List[str], sources_per_query: int, time_horizon) -> DataStorage:
         combined_storage = DataStorage()
         for query in queries:
@@ -33,32 +38,32 @@ class BaseProcessor(ABC):
         pass
 
     def add_smart_tags(self, data_storage: DataStorage, questions: List[str]) -> DataStorage:
-        for platform_name in data_storage.data.keys():
-            for title in data_storage.data[platform_name].keys():
-                content = data_storage.data[platform_name][title].get("content")
-                if not content:
-                    continue
+        titles = data_storage.data[self.platform_name].keys()
+        for title in tqdm(titles, desc=f"Processing items for {self.platform_name}"):
+            content = data_storage.data[self.platform_name][title].get("content")
+            if not content:
+                continue
 
-                summary, combine_flag = self.llm.summarize(content=content, questions=questions)
+            logger.debug(f"Processing data item entitled: '{title}'")
+            summary, combine_flag = self.llm.summarize(content=content, questions=questions)
 
-                if combine_flag:
-                    combined_summary = self.llm.organize_summarization_into_one(summary)
-                    data_storage.data[platform_name][title].pop("content")
-                    data_storage.data[platform_name][title]["detailed_summary"] = summary
-                    data_storage.data[platform_name][title]["summary"] = combined_summary
-                else:
-                    data_storage.data[platform_name][title]["summary"] = summary
+            if combine_flag:
+                combined_summary = self.llm.organize_summarization_into_one(summary)
+                data_storage.data[self.platform_name][title].pop("content")
+                data_storage.data[self.platform_name][title]["detailed_summary"] = summary
+                data_storage.data[self.platform_name][title]["summary"] = combined_summary
+            else:
+                data_storage.data[self.platform_name][title]["summary"] = summary
 
-                relevance_score = 0
-                for question in questions:
-                    answer = self.llm.ask_llama_question(question, content, summary)
-                    if self.llm.validate_with_q_and_a_relevance(question, answer) and self.llm.validate_with_llm_knowledge(question, answer):
-                        if "Q&A" not in data_storage.data[platform_name][title]:
-                            data_storage.data[platform_name][title]["Q&A"] = {}
-                        data_storage.data[platform_name][title]["Q&A"][question] = answer
-                        relevance_score += 1
-                
-                data_storage.data[platform_name][title]["relevance_score"] = relevance_score
+            relevance_score = 0
+            for question in questions:
+                answer = self.llm.ask_llama_question(question, content, summary)
+                if self.llm.validate_with_q_and_a_relevance(question, answer) and self.llm.validate_with_llm_knowledge(question, answer):
+                    if "Q&A" not in data_storage.data[self.platform_name][title]:
+                        data_storage.data[self.platform_name][title]["Q&A"] = {}
+                    data_storage.data[self.platform_name][title]["Q&A"][question] = answer
+                    relevance_score += 1
+            data_storage.data[self.platform_name][title]["relevance_score"] = relevance_score
         return data_storage
 
     def filter_relevant_sources(self, data_storage: DataStorage) -> DataStorage:

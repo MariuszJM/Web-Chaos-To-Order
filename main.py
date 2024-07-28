@@ -1,8 +1,34 @@
+import logging
 from src.utils import create_output_directory, load_config, save_data
 from src.processors.platforms_processor import process_platforms
 
+output_dir = create_output_directory('runs')
+
+log_filename = f"{output_dir}/app.log"
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)  # Ustaw globalny poziom logowania
+
+# Utwórz handler dla terminala (StreamHandler) z poziomem INFO
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.INFO)
+stream_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
+# Utwórz handler dla pliku (FileHandler) z poziomem DEBUG
+file_handler = logging.FileHandler(log_filename)
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
+# Dodaj handlery do loggera
+logger.addHandler(stream_handler)
+logger.addHandler(file_handler)
+
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
+
+
 def main():
     config = load_config('./config/config.yaml')
+    logger.debug("Configuration loaded.")
     sources_per_query = config['sources_per_query']
     search_phrases = config['search_phrases']
     platforms = [platform.lower() for platform in config['platforms']]
@@ -14,11 +40,9 @@ def main():
         platforms, search_phrases, sources_per_query, specific_questions, time_horizon, max_outputs
     )
 
-    output_dir = create_output_directory('runs')
     save_data(output_dir, run_name, results, rest_results, config)
 
-    print("Combined Results:", results.to_dict())
-    print(f"Data saved to: {output_dir}")
+    logger.info("Data saved to: %s", output_dir)
 
 if __name__ == "__main__":
     main()
