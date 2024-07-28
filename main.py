@@ -6,19 +6,16 @@ output_dir = create_output_directory('runs')
 
 log_filename = f"{output_dir}/app.log"
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)  # Ustaw globalny poziom logowania
+logger.setLevel(logging.DEBUG)  
 
-# Utwórz handler dla terminala (StreamHandler) z poziomem INFO
 stream_handler = logging.StreamHandler()
 stream_handler.setLevel(logging.INFO)
 stream_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 
-# Utwórz handler dla pliku (FileHandler) z poziomem DEBUG
 file_handler = logging.FileHandler(log_filename)
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 
-# Dodaj handlery do loggera
 logger.addHandler(stream_handler)
 logger.addHandler(file_handler)
 
