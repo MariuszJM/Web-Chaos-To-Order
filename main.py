@@ -1,6 +1,6 @@
 import logging
 from src.utils import create_output_directory, load_config, save_data
-from src.processors.platforms_processor import process_platforms
+from src.processors.process_platforms import process_platforms
 
 output_dir = create_output_directory('runs')
 
