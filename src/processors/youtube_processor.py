@@ -14,7 +14,7 @@ class YouTubeProcessor(InDepthProcessor):
     CREDENTIALS_FILE = "./credentials/credentials.json"
     QUALITY_THRESHOLD = 0.2
 
-    def __init__(self, platform_name="YouTube"):
+    def __init__(self, platform_name="youtube"):
         super().__init__(platform_name)
         self.youtube = self.authenticate_youtube()
 

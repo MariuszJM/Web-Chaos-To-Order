@@ -26,7 +26,6 @@ logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
 def main():
     config = load_config('./config/config.yaml')
     logger.debug("Configuration loaded.")
-    sources_per_query = config['sources_per_query']
     search_phrases = config['search_phrases']
     platforms = [platform.lower() for platform in config['platforms']]
     max_outputs = config['max_outputs_per_platform']
@@ -34,7 +33,7 @@ def main():
     specific_questions = config['specific_questions']
 
     results, rest_results, run_name = process_platforms(
-        platforms, search_phrases, sources_per_query, specific_questions, time_horizon, max_outputs
+        platforms, search_phrases, specific_questions, time_horizon, max_outputs
     )
 
     save_data(output_dir, run_name, results, rest_results, config)

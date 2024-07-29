@@ -3,7 +3,7 @@ from src.processors.processor_factory import ProcessorFactory
 
 logger = logging.getLogger(__name__)
 
-def process_platforms(platforms, queries, sources_per_query, specific_questions, time_horizon, max_outputs):
+def process_platforms(platforms, queries, specific_questions, time_horizon, max_outputs):
     logger.info(f"Processing platforms: {platforms}")
     for index, platform in enumerate(platforms):
         try:
@@ -11,7 +11,6 @@ def process_platforms(platforms, queries, sources_per_query, specific_questions,
             logger.debug("Processor created for platform: %s", platform)
             top_results, results_without_content, less_relevant_results, rejected_results = processor.process(
                 queries, 
-                sources_per_query=sources_per_query, 
                 questions=specific_questions, 
                 time_horizon=time_horizon, 
                 max_outputs_per_platform=max_outputs

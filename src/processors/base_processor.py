@@ -11,13 +11,14 @@ MODEL_PLATFORM = "ollama"
 MODEL_NAME = "llama3:instruct"
 
 class BaseProcessor(ABC):
+    SOURCES_PER_QUERY = 10
     def __init__(self, platform_name: str):
         self.platform_name = platform_name
         self.llm = LLMFactory.create_llm(model_type=MODEL_PLATFORM, model_name=MODEL_NAME)
         logger.debug("BaseProcessor initialized for platform: %s", platform_name)
 
-    def process(self, queries: List[str], sources_per_query: int, questions: List[str], time_horizon, max_outputs_per_platform=7) -> DataStorage:
-        combined_data = self.combine_multiple_queries(queries, sources_per_query, time_horizon)
+    def process(self, queries: List[str], questions: List[str], time_horizon, max_outputs_per_platform=7) -> DataStorage:
+        combined_data = self.combine_multiple_queries(queries, time_horizon)
         data_with_content, data_without_content = self.check_source_content(combined_data)
         tagged_data = self.add_smart_tags(data_with_content, questions)
         relevant_data, not_relevant_data = self.filter_relevant_sources(tagged_data)
@@ -26,15 +27,15 @@ class BaseProcessor(ABC):
         logger.info("Processing completed for platform: %s", self.platform_name)
         return top_data, data_without_content, less_relevant_data, not_relevant_data
 
-    def combine_multiple_queries(self, queries: List[str], sources_per_query: int, time_horizon) -> DataStorage:
+    def combine_multiple_queries(self, queries: List[str], time_horizon) -> DataStorage:
         combined_storage = DataStorage()
         for query in queries:
-            query_list = self.process_query(query, sources_per_query, time_horizon)
+            query_list = self.process_query(query, time_horizon)
             combined_storage.add_data_list(self.platform_name, query_list)
         return combined_storage
     
     @abstractmethod
-    def process_query(self, query: str, num_top_sources: int, time_horizon) -> DataStorage:
+    def process_query(self, query: str, time_horizon) -> DataStorage:
         pass
 
     def add_smart_tags(self, data_storage: DataStorage, questions: List[str]) -> DataStorage:
@@ -112,10 +113,10 @@ class BaseProcessor(ABC):
 
 
 class InDepthProcessor(BaseProcessor):
-    def process_query(self, query: str, num_top_sources: int, time_horizon) -> DataStorage:
-        sources = self.fetch_source_items(query, 2 * num_top_sources)
+    def process_query(self, query: str, time_horizon) -> DataStorage:
+        sources = self.fetch_source_items(query, 2 * self.SOURCES_PER_QUERY)
         filtered_sources = self.filter_low_quality_sources(sources, time_horizon)
-        top_sources = self.select_top_sources(filtered_sources, num_top_sources)
+        top_sources = self.select_top_sources(filtered_sources)
         data_storage = self.collect_source_details(top_sources)
         return data_storage
     
@@ -127,8 +128,8 @@ class InDepthProcessor(BaseProcessor):
     def filter_low_quality_sources(self, sources: List[dict], time_horizon) -> List[dict]:
         pass
     
-    def select_top_sources(self, sources: List[dict], num_top_sources: int) -> List[dict]:
-        return sources[:num_top_sources]
+    def select_top_sources(self, sources: List[dict]) -> List[dict]:
+        return sources[:self.SOURCES_PER_QUERY]
     
     @abstractmethod
     def collect_source_details(self, sources: List[dict]) -> DataStorage:

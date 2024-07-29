@@ -11,7 +11,7 @@ class GitHubProcessor(InDepthProcessor):
     STARS_THRESHOLD = 50
     DAYS_THRESHOLD = 365
 
-    def __init__(self, platform_name="GitHub"):
+    def __init__(self, platform_name="github"):
         super().__init__(platform_name)
 
     def fetch_source_items(self, query, limit):
