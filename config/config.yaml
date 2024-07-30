@@ -1,0 +1,25 @@
+search_phrases:
+  - "Huberman exercise routines"
+  - "Huberman cold exposure benefits"
+  - "Huberman sauna use guidelines"
+  - "Huberman focus and motivation techniques"
+  - "Huberman stress management strategies"
+
+specific_questions:
+  - "What exercise routines does Huberman suggest, including frequency?"
+  - "What are the benefits of cold exposure and recommended durations by Huberman?"
+  - "What are Huberman's guidelines for sauna use, including session length?"
+  - "What techniques does Huberman recommend for focus and motivation?"
+  - "What strategies does Huberman suggest for stress management?"
+  - "What are Huberman's intermittent fasting recommendations, including duration?"
+  - "What physical activities does Huberman recommend for mental health?"
+  - "What are Huberman's tips for daily cold exposure, including safety?"
+  - "What benefits of sauna use does Huberman highlight and how to measure them?"
+  - "How does Huberman recommend using mindfulness for focus, including session length?"
+  - "What tools does Huberman suggest for managing stress and tracking health?"
+
+platforms: #   Available: [youtube, github, google]
+  - youtube
+time_horizon: 1096  # Recommended: [month = 30, quarter = 90, year = 365, 3 years = 1096]
+max_outputs_per_platform: 7 # Recommended: [3, 4, 5, 6, 7, 8, 9]
+output_dir: './runs'
