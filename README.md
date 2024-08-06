@@ -7,7 +7,7 @@ For more information about this idea, check out this blog: [NavigatingThroughCha
 ## Example Input
 
 ```yaml
-search_phrases:
+search_queries:
   - "Huberman exercise routines"
   - "Huberman cold exposure benefits"
   - "Huberman sauna use guidelines"
