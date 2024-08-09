@@ -14,11 +14,12 @@ class GoogleProcessor(BaseProcessor):
         super().__init__(platform_name)
         self.google = self.authenticate_google()
         self.scrapper = ScrapperFactory.create_scrapper(scrapper_type=SCRAPPER_TYPE)
+        self.country_code = "PL"
     def authenticate_google(self):
         return build("customsearch", "v1", developerKey=GOOGLE_KEY)
 
     def process_query(self, query: str, time_horizon):
-        response = self.google.cse().list(q=query, cx=GOOGLE_CSE_ID, num=self.SOURCES_PER_QUERY, dateRestrict=f"d{time_horizon}").execute()
+        response = self.google.cse().list(q=query, cx=GOOGLE_CSE_ID, num=self.SOURCES_PER_QUERY, gl=self.country_code, dateRestrict=f"d{time_horizon}").execute()
         sources = response.get("items", [])
         data = []
         for item in sources:
