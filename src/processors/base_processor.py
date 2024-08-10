@@ -17,15 +17,22 @@ class BaseProcessor(ABC):
         self.llm = LLMFactory.create_llm(model_type=MODEL_PLATFORM, model_name=MODEL_NAME)
         logger.debug("BaseProcessor initialized for platform: %s", platform_name)
 
-    def process(self, queries: List[str], questions: List[str], time_horizon, max_outputs_per_platform=7) -> DataStorage:
+    def process(self, queries: List[str], questions: List[str], time_horizon, max_outputs_per_platform) -> DataStorage:
         combined_data = self.combine_multiple_queries(queries, time_horizon)
         data_with_content, data_without_content = self.check_source_content(combined_data)
+        
+        if not data_with_content.data:
+            logger.warning("data_with_content is empty, proceeding with default DataStorage objects.")
+            return DataStorage(), data_without_content, DataStorage(), DataStorage()
+        
         tagged_data = self.add_smart_tags(data_with_content, questions)
         relevant_data, not_relevant_data = self.filter_relevant_sources(tagged_data)
         ranked_data = self.rank_sources_by_relevance(relevant_data)
         top_data, less_relevant_data = self.choose_top_sources(ranked_data, max_outputs_per_platform)
+        
         logger.info("Processing completed for platform: %s", self.platform_name)
         return top_data, data_without_content, less_relevant_data, not_relevant_data
+
 
     def combine_multiple_queries(self, queries: List[str], time_horizon) -> DataStorage:
         combined_storage = DataStorage()
