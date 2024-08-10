@@ -72,9 +72,3 @@ class BaseLLM:
         response = self.generate_response(prompt)
         return not 'no' in response.lower()
 
-    def provide_run_name(self, queries: List[str], questions: List[str]) -> str:
-        prompt = (f"Create a short name (up to 24 characters) based on the following queries and questions, provide only the answer without any additional text:\n\n"
-                  f"Queries:\n{', '.join(queries)}\n\nQuestions:\n{', '.join(questions)}\n"
-                  "Aim is to provide a short name to as precisely as possible describe the search, which makes the best sense.")
-        response = self.generate_response(prompt)
-        return response.replace(" ", "_")

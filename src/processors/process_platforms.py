@@ -25,7 +25,6 @@ def process_platforms(platforms, queries, specific_questions, time_horizon, max_
                 combined_no_content_results = results_without_content
                 combined_less_relevant_results = less_relevant_results
                 combined_rejected_results = rejected_results
-                run_name = processor.llm.provide_run_name(queries, specific_questions)
 
         except ValueError as e:
             logger.error("Error processing platform %s: %s", platform, str(e))
@@ -37,4 +36,4 @@ def process_platforms(platforms, queries, specific_questions, time_horizon, max_
     }
 
     logger.debug("Platform processing completed")
-    return combined_results, rest_results, run_name
+    return combined_results, rest_results

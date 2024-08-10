@@ -27,7 +27,7 @@ def setup_logging(output_dir):
 
 def process_config_file(config_file, logger):
     config = load_config(config_file)
-    logger.debug(f"Configuration loaded from {config_file}.")
+    logger.info(f"Configuration loaded from {config_file}.")
     output_dir = create_output_directory(config['output_dir'])
     setup_logging(output_dir)
     
@@ -37,10 +37,10 @@ def process_config_file(config_file, logger):
     time_horizon = config['time_horizon']
     specific_questions = config['specific_questions']
 
-    results, rest_results, run_name = process_platforms(
+    results, rest_results = process_platforms(
         platforms, search_phrases, specific_questions, time_horizon, max_outputs
     )
-
+    run_name = config_file.split('.')[0]
     save_data(output_dir, run_name, results, rest_results, config)
 
     logger.info("Data saved to: %s", output_dir)
@@ -58,5 +58,5 @@ def main(config_path):
         logger.error(f"Invalid path provided: {config_path}")
 
 if __name__ == "__main__":
-    config_path = './config/Quaterly'  
+    config_path = './config/tmp'  
     main(config_path)
