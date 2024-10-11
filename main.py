@@ -58,5 +58,5 @@ def main(config_path):
         logger.error(f"Invalid path provided: {config_path}")
 
 if __name__ == "__main__":
-    config_path = './config/tmp'  
+    config_path = './config/Jobs_Search/artificial_intelligence_machine_learning.yaml'  
     main(config_path)

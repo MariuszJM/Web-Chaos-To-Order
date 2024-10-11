@@ -3,7 +3,7 @@ from src.llm.base_llm import BaseLLM
 
 
 class OllamaLLM(BaseLLM):
-    def __init__(self, model_name="llama3:instruct"):
+    def __init__(self, model_name="llama3.1:8b-instruct-q4_0"):
         super().__init__(model_name)
 
     def generate_response(self, prompt: str) -> str:

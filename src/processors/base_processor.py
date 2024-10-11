@@ -8,7 +8,7 @@ from src.llm.llm_factory import LLMFactory
 logger = logging.getLogger(__name__)
 
 MODEL_PLATFORM = "ollama"
-MODEL_NAME = "llama3:instruct"
+MODEL_NAME = "llama3.2:latest"
 
 class BaseProcessor(ABC):
     SOURCES_PER_QUERY = 10
